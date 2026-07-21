@@ -47,9 +47,11 @@ function freshStore() {
 /** In-memory fake Pinecone index — real git is used for the committed-gate; only Pinecone is faked. */
 function fakeIndex() {
   const records = new Map<string, FlatRecord>();
-  // Slugs that should report "not present" on fetch for the next N calls,
-  // simulating integrated-embedding's eventual-consistency lag (KTD1 freshness test).
-  const notYetSearchable = new Map<string, number>();
+  // Slugs that lag in SEARCH for the next N search calls, then appear —
+  // modeling real integrated-embedding: fetch-by-id is consistent right after
+  // upsert, but semantic search indexing lags (proven by live smoke). Only
+  // search is gated; fetch is immediately consistent.
+  const searchLag = new Map<string, number>();
 
   const client: PineconeClient = {
     listIndexes: async () => ({ indexes: [{ name: "agent-brain-test" }] }),
@@ -62,19 +64,23 @@ function fakeIndex() {
         searchRecords: async (opts: { query: { topK: number; inputs: { text: string } } }) => ({
           result: {
             hits: [...records.values()]
-              .filter((record) => (notYetSearchable.get(record.id) ?? 0) <= 0)
+              .filter((record) => {
+                const remaining = searchLag.get(record.id) ?? 0;
+                if (remaining > 0) {
+                  searchLag.set(record.id, remaining - 1); // decrement per search attempt
+                  return false;
+                }
+                return true;
+              })
               .slice(0, opts.query.topK)
               .map((record) => ({ _id: record.id, _score: 0.9, fields: {} })),
           },
         }),
+        // fetch-by-id: immediately consistent after upsert (no lag) — this is
+        // what makes the lazy-embed dedup correct while search still lags.
         fetch: async (opts: { ids: string[] }) => {
           const present: Record<string, unknown> = {};
           for (const id of opts.ids) {
-            const remaining = notYetSearchable.get(id) ?? 0;
-            if (remaining > 0) {
-              notYetSearchable.set(id, remaining - 1);
-              continue;
-            }
             if (records.has(id)) present[id] = records.get(id);
           }
           return { records: present };
@@ -86,9 +92,9 @@ function fakeIndex() {
   return {
     client,
     records,
-    /** Makes `slug` report "not present" (both fetch and search) for the next `n` calls. */
+    /** Makes `slug` lag in SEARCH for the next `n` search calls, then appear. */
     delaySearchability(slug: string, n: number): void {
-      notYetSearchable.set(slug, n);
+      searchLag.set(slug, n);
     },
   };
 }

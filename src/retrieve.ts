@@ -95,32 +95,19 @@ function parseKnowledgeNode(filePath: string, slug: string): DistilledNode {
   };
 }
 
-/**
- * Upserts `missingSlugs`, then bounded-polls `fetchExistingIds` until they
- * all report present or the attempt cap is hit. Integrated-embedding upsert
- * is eventually consistent (same rationale as pinecone.test.ts's live-test
- * poll) — this protects the AE1/AE4 on-camera flip from a false "not found"
- * on the same retrieve call that just embedded the node. Bounded, not
- * infinite: if the cap is hit, retrieve proceeds to search anyway.
- */
-async function waitUntilEmbedded(
-  client: PineconeClient,
-  indexName: string,
-  slugs: string[],
-  retry: { attempts: number; delayMs: number },
-): Promise<void> {
-  for (let attempt = 0; attempt < retry.attempts; attempt++) {
-    const present = await fetchExistingIds(client, indexName, slugs);
-    if (present.length === slugs.length) return;
-    await new Promise((resolve) => setTimeout(resolve, retry.delayMs));
-  }
-}
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface RetrieveOptions {
   topK?: number;
   client?: PineconeClient;
   indexName?: string;
-  /** Bounded poll after lazy-embedding a missing node (KTD1 freshness). */
+  /**
+   * Bounded search-readiness poll after lazy-embedding (KTD1 freshness). Real
+   * integrated-embedding upsert is eventually consistent, and — proven by live
+   * smoke — semantic SEARCH lags fetch-by-id consistency on a fresh index. So
+   * the freshness poll must re-run the search (not fetch), bounded, only when
+   * this call just embedded something.
+   */
   embedRetry?: { attempts: number; delayMs: number };
 }
 
@@ -137,7 +124,10 @@ export async function retrieve(
   const topK = opts.topK ?? 5;
   const client = opts.client ?? getClient();
   const indexName = opts.indexName ?? getIndexName();
-  const embedRetry = opts.embedRetry ?? { attempts: 5, delayMs: 200 };
+  // ~20s cap on the first retrieve after a commit (returns early the moment a
+  // committed hit appears). On a warm index this resolves in a few seconds;
+  // subsequent retrieves skip the poll entirely (nothing newly embedded).
+  const embedRetry = opts.embedRetry ?? { attempts: 20, delayMs: 1000 };
 
   const committedSlugs = committedKnowledgeSlugs(store.root);
   if (committedSlugs.length === 0) return [];
@@ -152,30 +142,39 @@ export async function retrieve(
   );
 
   // Lazy-embed (KTD1): only committed nodes are ever projected into Pinecone.
+  // fetch-by-id consistency is adequate for this dedup (avoids re-upserting).
   const existingIds = new Set(await fetchExistingIds(client, indexName, committedSlugs));
   const missingSlugs = committedSlugs.filter((slug) => !existingIds.has(slug));
   if (missingSlugs.length > 0) {
     const records = missingSlugs.map((slug) => buildRecord(nodesBySlug.get(slug) as DistilledNode));
     await upsertNodes(client, indexName, records);
-    await waitUntilEmbedded(client, indexName, missingSlugs, embedRetry);
   }
 
-  const hits = await searchNodes(client, indexName, query, topK);
-
-  // Filter to the committed set — defends R9/AE2 even if Pinecone still
-  // holds a reverted/stale node (see the "partial revert" test, which keeps
-  // committedSlugs non-empty so this filter — not the zero-commit
-  // early-return above — is what's actually exercised).
-  return hits
-    .filter((hit) => nodesBySlug.has(hit.id))
-    .map((hit) => {
-      const node = nodesBySlug.get(hit.id) as DistilledNode;
-      return {
-        slug: node.slug,
-        title: node.title,
-        prose: node.prose,
-        provenance: { source_episode: node.source_episode, source_path: node.source_path },
-        score: hit.score,
-      };
-    });
+  // Search, filtering hits to the committed set — defends R9/AE2 even if
+  // Pinecone still holds a reverted/stale node (see the "partial revert"
+  // test). When this call just embedded nodes, poll the SEARCH (not fetch)
+  // until a committed hit appears or the cap is hit (KTD1 freshness) — search
+  // lags fetch on a fresh index, so fetch-readiness would return too early.
+  const justEmbedded = missingSlugs.length > 0;
+  let results: RetrievedNode[] = [];
+  for (let attempt = 0; attempt < embedRetry.attempts; attempt++) {
+    const hits = await searchNodes(client, indexName, query, topK);
+    results = hits
+      .filter((hit) => nodesBySlug.has(hit.id))
+      .map((hit) => {
+        const node = nodesBySlug.get(hit.id) as DistilledNode;
+        return {
+          slug: node.slug,
+          title: node.title,
+          prose: node.prose,
+          provenance: { source_episode: node.source_episode, source_path: node.source_path },
+          score: hit.score,
+        };
+      });
+    // Stop as soon as we have a committed hit; also stop immediately when this
+    // call embedded nothing (an empty result is then genuinely empty, not lag).
+    if (results.length > 0 || !justEmbedded) break;
+    await sleep(embedRetry.delayMs);
+  }
+  return results;
 }
