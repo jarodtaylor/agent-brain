@@ -13,6 +13,8 @@ Every decision + why + what it serves (the north star). Newest at the bottom. Op
 | 7 | **Two repos**: agent-brain (public product) + ai-agent-project cockpit (private process); one-directional breadcrumbs | A standalone keeper needs its own repo; protect the public/private boundary | Clean separation |
 | 8 | **Claude-only this week**; cross-harness + unit-loop deferred | Don't boil the ocean; Sprint 1 is a single-harness skeleton | Completion over scope |
 | 9 | Anti-drift via **START-HERE + DECISIONS + lean `/handoff`**; multi-model pipeline deferred | Durable docs survive fresh sessions and auto-compact — continuity from files, not chat | No drift between sessions |
+| 10 | **Work from agent-brain** (build home); cockpit = cohort/process only | Native git / skills / codebase-memory / `/handoff`; ends the absolute-path awkwardness of editing across repos | Clean ergonomics |
+| 11 | **Compound Engineering = the methodology; Sherpa = the deliverable schedule** (non-skippable: 3 demos, Sprint-1 eval set, sherpa-MCP progress) | CE fits the handoffs + durable docs; Sherpa's hand-holding isn't aimed at an expert | Build velocity + cohort standing |
 
 ## Open forks (decide later)
 - **L2↔L3 cut + promotion taxonomy** — the exact durable/runtime boundary and promotion event types → Ideation / Architecture.

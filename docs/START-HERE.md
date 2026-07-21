@@ -21,10 +21,12 @@ the fast layer speeds up search, it never becomes the truth.*
 
 ## Where we are RIGHT NOW  (2026-07-21)
 - ✅ Repo scaffolded — MCP server stub (`capture` / `promote` / `retrieve`), typechecks clean, deps in.
-- ✅ Anti-drift docs + local `/handoff` skill in place.
-- ⏳ **▶ NEXT:** wire the walking skeleton — make `capture → promote → retrieve` real (write a distilled
-  markdown node + Pinecone upsert/search) in a **single harness**, plus a 5–10 case eval set.
-  Target: **Sprint 1 demo, Sun Jul 26.**
+- ✅ Anti-drift docs + local `/handoff` skill + `CLAUDE.md` entry point in place.
+- ✅ Operating model aligned — **build from agent-brain**; Compound Engineering is the methodology;
+  Sherpa = the cohort deliverable schedule (see DECISIONS #10–11).
+- ⏳ **▶ NEXT:** open the **walking-skeleton build plan** (start with an advisor pass), then build
+  `capture → promote → retrieve` for real — distilled markdown node + Pinecone upsert/search — in a
+  **single harness**, plus a 5–10 case eval set. Target: **Sprint 1 demo, Sun Jul 26.**
 
 ## How we work
 - **Model routing:** Opus main loop / Sonnet coding subagents (Fable at architecture-lock gates).
