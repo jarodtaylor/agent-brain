@@ -15,7 +15,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildNodeMarkdown } from "./frontmatter";
+import { buildNodeMarkdown, parseNodeMarkdown } from "./frontmatter";
 import type { BrainStore } from "./store";
 
 export interface PromotedNode {
@@ -57,6 +57,13 @@ export function promoteEpisode(
   store: BrainStore,
   input: { episodeId: string; title: string; prose: string; description?: string; tags?: string[] },
 ): PromotedNode {
+  // episodeId comes verbatim from the MCP tool input — reject path separators
+  // and `..` so it can't escape rawDir when joined (capture only ever mints
+  // ids from a safe timestamp + hex, but promote must not trust its caller).
+  if (/[/\\]|\.\./.test(input.episodeId)) {
+    throw new Error(`Invalid episodeId "${input.episodeId}": must not contain path separators or "..".`);
+  }
+
   const episodeDir = join(store.rawDir, input.episodeId);
   const metaPath = join(episodeDir, "meta.json");
   if (!existsSync(metaPath)) {
@@ -88,6 +95,20 @@ export function promoteEpisode(
   );
 
   const path = join(store.knowledgeDir, `${slug}.md`);
+  // Deterministic slugs mean two distinct titles can collide on one slug.
+  // Re-promoting the SAME episode (idempotent content update) is fine, but
+  // refuse to overwrite a node whose identity belongs to a DIFFERENT episode —
+  // silently replacing a committed node's content + provenance is a data-loss
+  // trap, and reconciliation is deferred past Sprint 1.
+  if (existsSync(path)) {
+    const existing = parseNodeMarkdown(readFileSync(path, "utf8"));
+    if (existing.fields.source_episode !== input.episodeId) {
+      throw new Error(
+        `Slug collision: title "${input.title}" maps to slug "${slug}", already used by episode ` +
+          `"${existing.fields.source_episode}". Refusing to overwrite a different node's identity — choose a distinct title.`,
+      );
+    }
+  }
   writeFileSync(path, contents);
 
   return { slug, path };

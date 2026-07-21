@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { captureEpisode } from "./capture";
 import type { FlatRecord, PineconeClient } from "./pinecone";
 import { promoteEpisode } from "./promote";
@@ -28,6 +30,10 @@ function fakeIndex() {
   // upsert, but semantic search indexing lags (proven by live smoke). Only
   // search is gated; fetch is immediately consistent.
   const searchLag = new Map<string, number>();
+  // Slugs that never surface in search — models a query that simply doesn't
+  // match a given node (the fake otherwise ignores the query text).
+  const hidden = new Set<string>();
+  let searchCalls = 0;
 
   const client: PineconeClient = {
     listIndexes: async () => ({ indexes: [{ name: "agent-brain-test" }] }),
@@ -37,21 +43,25 @@ function fakeIndex() {
         upsertRecords: async (opts: { records: FlatRecord[] }) => {
           for (const record of opts.records) records.set(record.id, record);
         },
-        searchRecords: async (opts: { query: { topK: number; inputs: { text: string } } }) => ({
-          result: {
-            hits: [...records.values()]
-              .filter((record) => {
-                const remaining = searchLag.get(record.id) ?? 0;
-                if (remaining > 0) {
-                  searchLag.set(record.id, remaining - 1); // decrement per search attempt
-                  return false;
-                }
-                return true;
-              })
-              .slice(0, opts.query.topK)
-              .map((record) => ({ _id: record.id, _score: 0.9, fields: {} })),
-          },
-        }),
+        searchRecords: async (opts: { query: { topK: number; inputs: { text: string } } }) => {
+          searchCalls++;
+          return {
+            result: {
+              hits: [...records.values()]
+                .filter((record) => {
+                  if (hidden.has(record.id)) return false;
+                  const remaining = searchLag.get(record.id) ?? 0;
+                  if (remaining > 0) {
+                    searchLag.set(record.id, remaining - 1); // decrement per search attempt
+                    return false;
+                  }
+                  return true;
+                })
+                .slice(0, opts.query.topK)
+                .map((record) => ({ _id: record.id, _score: 0.9, fields: {} })),
+            },
+          };
+        },
         // fetch-by-id: immediately consistent after upsert (no lag) — this is
         // what makes the lazy-embed dedup correct while search still lags.
         fetch: async (opts: { ids: string[] }) => {
@@ -71,6 +81,14 @@ function fakeIndex() {
     /** Makes `slug` lag in SEARCH for the next `n` search calls, then appear. */
     delaySearchability(slug: string, n: number): void {
       searchLag.set(slug, n);
+    },
+    /** Permanently excludes `slug` from search results (models a non-matching query). */
+    hideFromSearch(slug: string): void {
+      hidden.add(slug);
+    },
+    /** Number of searchRecords calls so far. */
+    searchCalls(): number {
+      return searchCalls;
     },
   };
 }
@@ -245,5 +263,48 @@ describe("retrieve — committed gate (KTD2, R8, R9)", () => {
     await retrieve(store, "north star", { ...opts, client: fake.client });
 
     expect(createCalls).toBe(0);
+  });
+
+  test("HEAD gate applies to CONTENT: an uncommitted edit to a committed node is neither served nor embedded", async () => {
+    const store = freshStore();
+    const fake = fakeIndex();
+    const node = promoteAndWrite(store);
+    commitAll(store.root, "promote north star");
+    const committedProse = "The north star is a membrane between raw episodes and durable, curated truth.";
+
+    // Edit the working-tree file WITHOUT recommitting — the slug stays in HEAD.
+    writeFileSync(join(store.knowledgeDir, `${node.slug}.md`), readFileSync(join(store.knowledgeDir, `${node.slug}.md`), "utf8").replace(committedProse, "SECRET uncommitted edit"));
+
+    const results = await retrieve(store, "north star", { ...opts, client: fake.client });
+
+    // Served content comes from HEAD, not the working tree.
+    expect(results[0]?.prose).toBe(committedProse);
+    expect(results[0]?.prose).not.toContain("SECRET");
+    // And the uncommitted edit was never projected into Pinecone.
+    expect(fake.records.get(node.slug)?.text).toBe(committedProse);
+    expect(fake.records.get(node.slug)?.text).not.toContain("SECRET");
+  });
+
+  test("steady state: an already-embedded corpus with zero matching hits returns [] after ONE search, no polling", async () => {
+    const store = freshStore();
+    const fake = fakeIndex();
+    const node = promoteAndWrite(store);
+    commitAll(store.root, "promote north star");
+
+    // First retrieve embeds the node (justEmbedded=true path).
+    await retrieve(store, "north star", { ...opts, client: fake.client });
+    const searchesAfterEmbed = fake.searchCalls();
+
+    // Now the node is already embedded; model a query that matches nothing.
+    fake.hideFromSearch(node.slug);
+    const results = await retrieve(store, "unrelated query", {
+      ...opts,
+      client: fake.client,
+      embedRetry: { attempts: 10, delayMs: 1 },
+    });
+
+    expect(results).toEqual([]);
+    // Nothing newly embedded -> single search, not a 10x poll.
+    expect(fake.searchCalls() - searchesAfterEmbed).toBe(1);
   });
 });

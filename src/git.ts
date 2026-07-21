@@ -14,10 +14,16 @@ export interface GitResult {
 }
 
 export function runGit(cwd: string, ...args: string[]): GitResult {
-  const result = Bun.spawnSync(["git", "-C", cwd, ...args], { stdout: "pipe", stderr: "pipe" });
-  return {
-    exitCode: result.exitCode,
-    stdout: result.stdout.toString(),
-    stderr: result.stderr.toString(),
-  };
+  try {
+    const result = Bun.spawnSync(["git", "-C", cwd, ...args], { stdout: "pipe", stderr: "pipe" });
+    return {
+      exitCode: result.exitCode,
+      stdout: result.stdout.toString(),
+      stderr: result.stderr.toString(),
+    };
+  } catch (err) {
+    // git binary missing / not spawnable — synthesize a failed GitResult so
+    // callers see a non-zero exit + clear stderr instead of an escaping throw.
+    return { exitCode: 127, stdout: "", stderr: `git could not be executed: ${(err as Error).message}` };
+  }
 }

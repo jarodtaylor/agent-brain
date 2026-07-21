@@ -14,6 +14,7 @@
  * See docs/plans/2026-07-21-001-feat-memory-walking-skeleton-plan.md, R11/R12/KTD3.
  */
 import { Pinecone } from "@pinecone-database/pinecone";
+import type { NodeFrontmatter } from "./frontmatter";
 
 /** Single default namespace — no per-user/per-project partitioning yet. */
 export const DEFAULT_NAMESPACE = "default";
@@ -74,13 +75,8 @@ export function getIndexName(): string {
  * (see `promote.ts`). Field names mirror the frontmatter keys verbatim so a
  * caller can pass a parsed node straight through with no translation.
  */
-export interface DistilledNode {
+export interface DistilledNode extends Omit<NodeFrontmatter, "type"> {
   slug: string;
-  title: string;
-  description: string;
-  tags: string[];
-  source_episode: string;
-  source_path?: string;
   prose: string;
 }
 

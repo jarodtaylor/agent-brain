@@ -49,16 +49,38 @@ describe("promoteEpisode", () => {
     expect(gitLsFiles(store.root)).not.toContain("knowledge/agent-memory-system-north-star.md");
   });
 
-  test("promoting two episodes with the same title yields the same slug/path — no duplicate spawn", () => {
+  test("deterministic slug: re-promoting the SAME episode reuses the slug and overwrites in place", () => {
+    const store = freshStore();
+    const episode = captureEpisode(store, { text: "draft A" });
+
+    const first = promoteEpisode(store, { episodeId: episode.id, title: "Shared Title", prose: "prose A" });
+    const second = promoteEpisode(store, { episodeId: episode.id, title: "Shared Title", prose: "prose B — edited" });
+
+    expect(second.slug).toBe(first.slug);
+    expect(second.path).toBe(first.path);
+    // Idempotent update: the working file now carries the new prose, not the old.
+    const contents = readFileSync(second.path, "utf8");
+    expect(contents).toContain("prose B — edited");
+    expect(contents).not.toContain("prose A");
+  });
+
+  test("slug collision: a DIFFERENT episode whose title maps to an existing slug is refused, not silently overwritten", () => {
     const store = freshStore();
     const episodeA = captureEpisode(store, { text: "draft A" });
     const episodeB = captureEpisode(store, { text: "draft B" });
 
-    const nodeA = promoteEpisode(store, { episodeId: episodeA.id, title: "Shared Title", prose: "prose A" });
-    const nodeB = promoteEpisode(store, { episodeId: episodeB.id, title: "Shared Title", prose: "prose B" });
+    promoteEpisode(store, { episodeId: episodeA.id, title: "Shared Title", prose: "prose A" });
 
-    expect(nodeA.slug).toBe(nodeB.slug);
-    expect(nodeA.path).toBe(nodeB.path);
+    expect(() =>
+      promoteEpisode(store, { episodeId: episodeB.id, title: "Shared Title", prose: "prose B" }),
+    ).toThrow(/slug collision/i);
+  });
+
+  test("rejects an episodeId containing path traversal", () => {
+    const store = freshStore();
+    expect(() =>
+      promoteEpisode(store, { episodeId: "../../etc", title: "X", prose: "y" }),
+    ).toThrow(/path separators|\.\./i);
   });
 
   test("node body is exactly the agent-authored prose — agent-brain makes no LLM call and alters nothing", () => {

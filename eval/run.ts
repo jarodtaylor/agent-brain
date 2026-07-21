@@ -21,7 +21,9 @@ import { resolveStore } from "../src/store";
 interface EvalCase {
   query: string;
   expect_slug: string;
-  expect_source_episode?: string;
+  // Required: provenance correctness is the point of the eval (R15). A case
+  // that doesn't pin the source episode could pass on a wrong-provenance hit.
+  expect_source_episode: string;
 }
 
 interface CaseResult {
@@ -37,17 +39,28 @@ const TOP_K = 5;
 
 function loadCases(): EvalCase[] {
   if (!existsSync(CASES_PATH)) return [];
-  return readFileSync(CASES_PATH, "utf8")
+  const cases: EvalCase[] = [];
+  // Iterate with the physical line index so error messages point at the real
+  // file line, not the position within the comment-and-blank-filtered subset.
+  readFileSync(CASES_PATH, "utf8")
     .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line !== "" && !line.startsWith("//"))
-    .map((line, i) => {
+    .forEach((raw, i) => {
+      const line = raw.trim();
+      if (line === "" || line.startsWith("//")) return;
+      let parsed: EvalCase;
       try {
-        return JSON.parse(line) as EvalCase;
+        parsed = JSON.parse(line) as EvalCase;
       } catch {
         throw new Error(`eval/cases.jsonl line ${i + 1} is not valid JSON: ${line}`);
       }
+      if (!parsed.query || !parsed.expect_slug || !parsed.expect_source_episode) {
+        throw new Error(
+          `eval/cases.jsonl line ${i + 1}: each case needs query, expect_slug, and expect_source_episode.`,
+        );
+      }
+      cases.push(parsed);
     });
+  return cases;
 }
 
 async function runCase(store: ReturnType<typeof resolveStore>, c: EvalCase): Promise<CaseResult> {
@@ -59,7 +72,7 @@ async function runCase(store: ReturnType<typeof resolveStore>, c: EvalCase): Pro
     return { ...base, passed: false, rank: null, reason: `expected slug not in top ${TOP_K}` };
   }
   const match = results[rank]!;
-  if (c.expect_source_episode && match.provenance.source_episode !== c.expect_source_episode) {
+  if (match.provenance.source_episode !== c.expect_source_episode) {
     return {
       ...base,
       passed: false,
@@ -73,11 +86,13 @@ async function runCase(store: ReturnType<typeof resolveStore>, c: EvalCase): Pro
 async function main(): Promise<void> {
   const cases = loadCases();
   if (cases.length === 0) {
-    console.log(
-      "No eval cases yet. Freeze the promoted corpus, then author 5–10 cases in eval/cases.jsonl.\n" +
+    // An unconfigured eval is NOT a pass — exit non-zero so the Verification
+    // Contract gate can't go green before any case exists (R15).
+    console.error(
+      "No eval cases yet — eval NOT satisfied. Freeze the promoted corpus, then author 5–10 cases in eval/cases.jsonl.\n" +
         'Each line: { "query": "...", "expect_slug": "...", "expect_source_episode": "..." }',
     );
-    return;
+    process.exit(1);
   }
 
   const store = resolveStore();
