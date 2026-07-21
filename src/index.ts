@@ -15,6 +15,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { captureEpisode } from "./capture";
 import { promoteEpisode } from "./promote";
+import { retrieve } from "./retrieve";
 import { resolveStore } from "./store";
 
 const server = new McpServer({ name: "agent-brain", version: "0.0.1" });
@@ -83,14 +84,32 @@ server.registerTool(
       topK: z.number().int().positive().optional().describe("How many results (default 5)."),
     },
   },
-  async ({ query, topK }) => ({
-    content: [
-      {
-        type: "text",
-        text: `[stub] would retrieve top ${topK ?? 5} distilled notes for: "${query}". (not wired yet)`,
-      },
-    ],
-  }),
+  async ({ query, topK }) => {
+    const store = resolveStore();
+    const results = await retrieve(store, query, { topK });
+
+    if (results.length === 0) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `No committed knowledge nodes matched "${query}". Nothing is retrievable until it's promoted and committed.`,
+          },
+        ],
+      };
+    }
+
+    const text = results
+      .map((node, i) => {
+        const provenance = node.provenance.source_path
+          ? `${node.provenance.source_episode} (${node.provenance.source_path})`
+          : node.provenance.source_episode;
+        return `${i + 1}. ${node.title} [${node.slug}] — score ${node.score.toFixed(3)}\n   source: ${provenance}\n\n${node.prose}`;
+      })
+      .join("\n\n");
+
+    return { content: [{ type: "text", text }] };
+  },
 );
 
 async function main(): Promise<void> {
