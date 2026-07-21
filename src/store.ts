@@ -9,6 +9,7 @@
  */
 import { existsSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, join, relative } from "node:path";
+import { runGit } from "./git";
 
 export interface BrainStore {
   /** Real (symlink-resolved) path to the brain-store git working tree. */
@@ -21,12 +22,29 @@ export interface BrainStore {
 
 /** Runs `git -C dir rev-parse --show-toplevel`; returns the toplevel path, or null if `dir` isn't inside a git working tree. */
 function gitToplevel(dir: string): string | null {
-  const result = Bun.spawnSync(["git", "-C", dir, "rev-parse", "--show-toplevel"], {
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  if (result.exitCode !== 0) return null;
-  return result.stdout.toString().trim();
+  const result = runGit(dir, "rev-parse", "--show-toplevel");
+  return result.exitCode !== 0 ? null : result.stdout.trim();
+}
+
+let cachedPublicRepoRoot: string | undefined;
+
+/**
+ * The public agent-brain repo's git root, anchored on this source file's own
+ * location (never process.cwd() — see KTD5). Fixed for the process lifetime,
+ * so it's resolved once and cached across the many resolveStore() calls a
+ * long-lived MCP server makes.
+ */
+function publicRepoRoot(): string {
+  if (cachedPublicRepoRoot === undefined) {
+    const toplevel = gitToplevel(import.meta.dir);
+    if (!toplevel) {
+      throw new Error(
+        "Could not resolve the public agent-brain repo's git root — cannot enforce the store boundary.",
+      );
+    }
+    cachedPublicRepoRoot = realpathSync(toplevel);
+  }
+  return cachedPublicRepoRoot;
 }
 
 /**
@@ -92,17 +110,7 @@ export function resolveStore(overridePath?: string): BrainStore {
     throw new Error(`Brain-store path is not a git repository: ${storePath}`);
   }
 
-  // Anchored on the source file's own location, not process.cwd() — cwd is
-  // whatever launched the MCP server and can't be trusted (see KTD5/U1).
-  const publicRepoToplevel = gitToplevel(import.meta.dir);
-  if (!publicRepoToplevel) {
-    throw new Error(
-      "Could not resolve the public agent-brain repo's git root — cannot enforce the store boundary.",
-    );
-  }
-  const resolvedPublicRepoRoot = realpathSync(publicRepoToplevel);
-
-  assertOutsideBoundary(resolvedStore, resolvedPublicRepoRoot);
+  assertOutsideBoundary(resolvedStore, publicRepoRoot());
 
   return {
     root: resolvedStore,

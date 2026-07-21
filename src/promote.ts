@@ -15,6 +15,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { buildNodeMarkdown } from "./frontmatter";
 import type { BrainStore } from "./store";
 
 export interface PromotedNode {
@@ -43,17 +44,6 @@ export function slugify(title: string): string {
     .replace(/[^a-z0-9-]/g, "")
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
-}
-
-// Hand-rolled rather than a YAML library — the values here are always
-// controlled scalars (title/description/tags/provenance), and JSON's
-// double-quoted string escaping is valid YAML double-quoted scalar syntax.
-function yamlString(value: string): string {
-  return JSON.stringify(value);
-}
-
-function yamlStringArray(values: string[]): string {
-  return `[${values.map(yamlString).join(", ")}]`;
 }
 
 /**
@@ -85,20 +75,17 @@ export function promoteEpisode(
 
   mkdirSync(store.knowledgeDir, { recursive: true });
 
-  const frontmatterLines = [
-    "---",
-    "type: knowledge",
-    `title: ${yamlString(input.title)}`,
-    `description: ${yamlString(input.description ?? "")}`,
-    `tags: ${yamlStringArray(input.tags ?? [])}`,
-    `source_episode: ${yamlString(input.episodeId)}`,
-  ];
-  if (meta.source) {
-    frontmatterLines.push(`source_path: ${yamlString(meta.source)}`);
-  }
-  frontmatterLines.push("---", "");
-
-  const contents = `${frontmatterLines.join("\n")}\n${input.prose}\n`;
+  const contents = buildNodeMarkdown(
+    {
+      type: "knowledge",
+      title: input.title,
+      description: input.description ?? "",
+      tags: input.tags ?? [],
+      source_episode: input.episodeId,
+      source_path: meta.source,
+    },
+    input.prose,
+  );
 
   const path = join(store.knowledgeDir, `${slug}.md`);
   writeFileSync(path, contents);

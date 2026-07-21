@@ -185,7 +185,7 @@ async function pollUntil<T>(check: () => Promise<T>, isDone: (value: T) => boole
   const deadline = Date.now() + deadlineMs;
   let value = await check();
   while (!isDone(value) && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await Bun.sleep(2000);
     value = await check();
   }
   return value;
