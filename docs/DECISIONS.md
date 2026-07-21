@@ -15,9 +15,18 @@ Every decision + why + what it serves (the north star). Newest at the bottom. Op
 | 9 | Anti-drift via **START-HERE + DECISIONS + lean `/handoff`**; multi-model pipeline deferred | Durable docs survive fresh sessions and auto-compact — continuity from files, not chat | No drift between sessions |
 | 10 | **Work from agent-brain** (build home); cockpit = cohort/process only | Native git / skills / codebase-memory / `/handoff`; ends the absolute-path awkwardness of editing across repos | Clean ergonomics |
 | 11 | **Compound Engineering = the methodology; Sherpa = the deliverable schedule** (non-skippable: 3 demos, Sprint-1 eval set, sherpa-MCP progress) | CE fits the handoffs + durable docs; Sherpa's hand-holding isn't aimed at an expert | Build velocity + cohort standing |
+| 12 | **The demo stars the boundary + retrieval + provenance — NOT summarization quality** (agent-brain is a storage/boundary/retrieval substrate; the distilling is Claude's) | Good summarizing is just Claude being Claude; the membrane is the defensible layer | Honest differentiation vs "RAG over notes" |
+| 13 | **Full boundary in miniature** — capture→promote→retrieve all real & thin, run on real **messy + curated** sources | A recall-only tail is the exact "AI+Obsidian" anti-pattern; the promote membrane is what makes it not that | The demo that excites |
+| 14 | **Git commit = the promotion gate** (truth = committed; `git diff` is the review surface) | No review UI to build; matches the docs-to-main workflow | Ship velocity |
+| 15 | **Pinecone indexes distilled L2 truth only (Sprint 1); raw-archive recall deferred** | One job in week 1 keeps the skeleton thin; the massive-archive recall is the Sprint-2 wow | Completion over scope |
+| 16 | **Raw tier is immutable/append-only; L2 is curated *current* truth, not a timeline** (Karpathy/IBOS) | History lives in raw, meaning in L2 → unbreakable provenance + deterministic eval | The real model, not a compromise |
+| 17 | **Embed-on-commit = lazy-embed on retrieve** (retrieve returns only git-`HEAD`-committed nodes; advisor-gated) | Correctness lives in the committed-status gate (R8), so the trigger is reversible; lazy-embed uniquely gives *committed ⇒ retrievable, no manual step* | A robust on-camera demo |
+| 18 | **Brain store lives OUTSIDE the public repo; boundary enforced by path validation** (refuse to write inside the public tree) | Personal distilled notes can't land in the public product repo | The public/private boundary |
 
 ## Open forks (decide later)
-- **L2↔L3 cut + promotion taxonomy** — the exact durable/runtime boundary and promotion event types → Ideation / Architecture.
+- **Build-vs-use** — is the membrane already provided by shipping tiered-memory tools (mem0, Letta/MemGPT, Zep)? Carried as an FYI from ce-doc-review → a quick `/ce-pov` before/around build.
 - **License** — TBD (public repo) → before wider sharing.
 - **STRATEGY.md** — formal north star via `ce-strategy` → when we want it canonical.
 - **Graph + SQLite layers** — post-MVI.
+
+_Closed: **L2↔L3 cut + promotion taxonomy** — resolved this session (immutable raw, curated L2, git-commit gate, lazy-embed) and captured in the plan._

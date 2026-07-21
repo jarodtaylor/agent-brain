@@ -24,9 +24,8 @@ the fast layer speeds up search, it never becomes the truth.*
 - ✅ Anti-drift docs + local `/handoff` skill + `CLAUDE.md` entry point in place.
 - ✅ Operating model aligned — **build from agent-brain**; Compound Engineering is the methodology;
   Sherpa = the cohort deliverable schedule (see DECISIONS #10–11).
-- ⏳ **▶ NEXT:** open the **walking-skeleton build plan** (start with an advisor pass), then build
-  `capture → promote → retrieve` for real — distilled markdown node + Pinecone upsert/search — in a
-  **single harness**, plus a 5–10 case eval set. Target: **Sprint 1 demo, Sun Jul 26.**
+- ✅ **Plan cycle complete** (2026-07-21) — ce-brainstorm → requirements → 6-persona ce-doc-review (10 findings resolved) → advisor-gated architecture → ce-plan. **Implementation-ready** plan at `docs/plans/2026-07-21-001-feat-memory-walking-skeleton-plan.md`: 6 units (U1→U6), per-unit test scenarios, Verification Contract, DoD. Key refinements locked in DECISIONS #12–18.
+- ⏳ **▶ NEXT:** build the skeleton — `ce-work` (or `/goal`) on the plan, **U1 → U6 in dependency order** (start U1: brain-store resolution + boundary enforcement; Sonnet coding subagents). Target: **Sprint 1 demo, Sun Jul 26.**
 
 ## How we work
 - **Model routing:** Opus main loop / Sonnet coding subagents (Fable at architecture-lock gates).
