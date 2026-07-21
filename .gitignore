@@ -1,0 +1,20 @@
+# dependencies / build
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# env / secrets — never commit real values
+.env
+.env.*
+!.env.example
+
+# local-only notes (internal, never meant for the public repo)
+*.local.md
+*.local.*
+
+# os / editor
+.DS_Store
+*.log
+.idea/
+.vscode/

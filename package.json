@@ -1,0 +1,21 @@
+{
+  "name": "agent-brain",
+  "version": "0.0.1",
+  "description": "A cross-harness memory substrate for AI agents: capture raw episodes, promote distilled truth, retrieve it anywhere.",
+  "type": "module",
+  "module": "src/index.ts",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@pinecone-database/pinecone": "^8.1.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^7.0.2"
+  }
+}
