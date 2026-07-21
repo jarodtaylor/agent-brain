@@ -13,6 +13,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { captureEpisode } from "./capture";
+import { resolveStore } from "./store";
 
 const server = new McpServer({ name: "agent-brain", version: "0.0.1" });
 
@@ -27,14 +29,18 @@ server.registerTool(
       source: z.string().optional().describe("Where it came from — e.g. the harness or session id."),
     },
   },
-  async ({ text, source }) => ({
-    content: [
-      {
-        type: "text",
-        text: `[stub] captured ${text.length} chars${source ? ` from ${source}` : ""}. (persistence not wired yet)`,
-      },
-    ],
-  }),
+  async ({ text, source }) => {
+    const store = resolveStore();
+    const episode = captureEpisode(store, { text, source });
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Captured episode ${episode.id}${source ? ` from ${source}` : ""}. Not yet retrievable — promote it to make it durable truth.`,
+        },
+      ],
+    };
+  },
 );
 
 server.registerTool(
