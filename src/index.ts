@@ -1,14 +1,14 @@
 #!/usr/bin/env bun
 /**
- * agent-brain — MCP server (walking-skeleton stub)
+ * agent-brain — MCP server (walking skeleton)
  *
- * Exposes the three-step memory loop as MCP tools:
- *   capture  → record a raw episode into the runtime tier
- *   promote  → distill a raw episode into durable truth (git markdown + vector projection)
- *   retrieve → semantic recall of distilled truth, with provenance
+ * Exposes the three-step memory loop as MCP tools, wired to real storage:
+ *   capture  → append an immutable raw episode into the external brain store
+ *   promote  → scaffold an uncommitted distilled OKF node at a deterministic slug
+ *   retrieve → semantic recall of git-HEAD-committed nodes only, with provenance
  *
- * These are intentionally stubs. Sprint 1 wires them to real storage (markdown + Pinecone).
- * The architecture rule they enforce: nothing is "known" until it is promoted into durable truth.
+ * The architecture rule they enforce: nothing is "known" until it is promoted
+ * AND committed into durable truth (git HEAD of the brain store).
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";

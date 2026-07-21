@@ -21,12 +21,12 @@ the fast layer speeds up search, it never becomes the truth.*
 - **Northstar intake backlog:** `docs/NORTHSTAR-SOURCES.local.md` (gitignored) — the raw material to dogfood.
 
 ## Where we are RIGHT NOW  (2026-07-21)
-- ✅ Repo scaffolded — MCP server stub (`capture` / `promote` / `retrieve`), typechecks clean, deps in.
-- ✅ Anti-drift docs + local `/handoff` skill + `CLAUDE.md` entry point in place.
+- ✅ Repo scaffolded; anti-drift docs + local `/handoff` skill + `CLAUDE.md` entry point in place.
 - ✅ Operating model aligned — **build from agent-brain**; Compound Engineering is the methodology;
   Sherpa = the cohort deliverable schedule (see DECISIONS #10–11).
-- ✅ **Plan cycle complete** (2026-07-21) — ce-brainstorm → requirements → 6-persona ce-doc-review (10 findings resolved) → advisor-gated architecture → ce-plan. **Implementation-ready** plan at `docs/plans/2026-07-21-001-feat-memory-walking-skeleton-plan.md`: 6 units (U1→U6), per-unit test scenarios, Verification Contract, DoD. Key refinements locked in DECISIONS #12–18.
-- ⏳ **▶ NEXT:** build the skeleton — `ce-work` (or `/goal`) on the plan, **U1 → U6 in dependency order** (start U1: brain-store resolution + boundary enforcement; Sonnet coding subagents). Target: **Sprint 1 demo, Sun Jul 26.**
+- ✅ **Plan cycle complete** — implementation-ready plan at `docs/plans/2026-07-21-001-feat-memory-walking-skeleton-plan.md` (6 units, Verification Contract, DoD). Refinements in DECISIONS #12–18.
+- ✅ **Skeleton BUILT (U1–U5) on branch `feat/memory-walking-skeleton`** — `capture → promote → git commit → retrieve` runs end-to-end; the git-HEAD committed-gate holds (verified by a live Pinecone smoke). 46 tests + clean typecheck. Went through ce-simplify + a full ce-code-review (7 reviewers + Codex cross-model); the one P0 (a committed-gate content leak) is fixed and re-verified. Real brain store lives at `~/agent-brain-store` (external, git-backed).
+- ⏳ **▶ NEXT:** **U6 — real demo corpus + eval** (needs Jarod's AMS research + one messy source): run the loop on real material, freeze the corpus, author 5–10 eval cases in `eval/cases.jsonl`. Then the **Sprint 1 demo, Sun Jul 26.** Also: open the PR for the skeleton; rotate `PINECONE_API_KEY` (leaked into a subagent transcript).
 
 ## How we work
 - **Model routing:** Opus main loop / Sonnet coding subagents (Fable at architecture-lock gates).
