@@ -18,6 +18,7 @@ it semantically, with provenance. The rule: *nothing is "known" until it's promo
 the fast layer speeds up search, it never becomes the truth.*
 - **Platform:** TypeScript / Bun — MCP server (+ thin CLI) + Pinecone (integrated embedding).
 - **Borrow** L1/L2/L4 patterns from the IBOS reference; **build** the new L3 retrieval adapter.
+- **Northstar intake backlog:** `docs/NORTHSTAR-SOURCES.local.md` (gitignored) — the raw material to dogfood.
 
 ## Where we are RIGHT NOW  (2026-07-21)
 - ✅ Repo scaffolded — MCP server stub (`capture` / `promote` / `retrieve`), typechecks clean, deps in.
