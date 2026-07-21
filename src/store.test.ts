@@ -95,6 +95,12 @@ describe("assertOutsideBoundary", () => {
     );
   });
 
+  test("refuses when the store path IS the public repo root exactly", () => {
+    // path.relative of identical paths is "" (neither "inside" nor "containing"),
+    // so this equality case must be guarded explicitly — else nodes land in the public repo.
+    expect(() => assertOutsideBoundary("/repo", "/repo")).toThrow(/IS the public agent-brain repo/i);
+  });
+
   test("allows a sibling path that merely shares a prefix", () => {
     // /foo/bar-store must NOT be judged inside /foo/bar (startsWith would get this wrong).
     expect(() => assertOutsideBoundary("/foo/bar-store", "/foo/bar")).not.toThrow();

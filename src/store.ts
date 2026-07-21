@@ -46,6 +46,12 @@ export function isPathInside(base: string, target: string): boolean {
  * filesystem ancestors of either repo.
  */
 export function assertOutsideBoundary(storeRoot: string, publicRepoRoot: string): void {
+  if (storeRoot === publicRepoRoot) {
+    throw new Error(
+      `Brain-store path IS the public agent-brain repo (${publicRepoRoot}). ` +
+        "It must be a separate repo outside this one — otherwise personal nodes would land here.",
+    );
+  }
   if (isPathInside(publicRepoRoot, storeRoot)) {
     throw new Error(
       `Brain-store path resolves inside the public agent-brain repo (${publicRepoRoot}): ${storeRoot}. ` +
