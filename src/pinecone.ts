@@ -19,8 +19,12 @@ import type { NodeFrontmatter } from "./frontmatter";
 /** Single default namespace — no per-user/per-project partitioning yet. */
 export const DEFAULT_NAMESPACE = "default";
 
-/** Confirmed available in this account: dim 1024, cosine (verified against live docs/index). */
-const EMBED_MODEL = "llama-text-embed-v2";
+/**
+ * Integrated-embedding model. Defaults to llama-text-embed-v2 (dim 1024,
+ * cosine — verified available), overridable for other Pinecone accounts/regions
+ * via AGENT_BRAIN_EMBED_MODEL.
+ */
+const EMBED_MODEL = process.env.AGENT_BRAIN_EMBED_MODEL || "llama-text-embed-v2";
 
 /**
  * The minimal structural subset of the real `Pinecone`/`Index` SDK surface

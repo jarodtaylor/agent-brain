@@ -43,8 +43,12 @@ function committedKnowledgeSlugs(storeRoot: string): string[] {
   }
   return result.stdout
     .split("\n")
-    .filter((path) => path.endsWith(".md"))
-    .map((path) => path.slice("knowledge/".length, -".md".length));
+    .filter((path) => path.startsWith("knowledge/") && path.endsWith(".md"))
+    .map((path) => path.slice("knowledge/".length, -".md".length))
+    // Only flat, agent-brain-authored nodes: a slug is a bare filename. Drop any
+    // nested path (`knowledge/sub/x.md` -> `sub/x`) a human may have committed —
+    // a `/` in a slug would become a bad Pinecone id and a wrong `git show` path.
+    .filter((slug) => slug !== "" && !slug.includes("/"));
 }
 
 /**
@@ -173,7 +177,8 @@ export async function retrieve(
     // Stop as soon as we have a committed hit; also stop immediately when this
     // call embedded nothing (an empty result is then genuinely empty, not lag).
     if (results.length > 0 || !justEmbedded) break;
-    await Bun.sleep(embedRetry.delayMs);
+    // Don't sleep after the final attempt — no further search will run.
+    if (attempt < embedRetry.attempts - 1) await Bun.sleep(embedRetry.delayMs);
   }
   return results;
 }

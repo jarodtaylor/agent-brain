@@ -8,10 +8,10 @@
  * (R15). Run: `bun run eval/run.ts`.
  *
  * Cases live in `eval/cases.jsonl`, one JSON object per line:
- *   { "query": "...", "expect_slug": "...", "expect_source_episode": "..."? }
- * `expect_source_episode` is optional; when present, the matched node's
- * provenance must equal it. Freeze the promoted corpus BEFORE authoring cases
- * so the eval isn't a moving target (U6 execution note).
+ *   { "query": "...", "expect_slug": "...", "expect_source_episode": "..." }
+ * All three fields are required — provenance correctness is the point of the
+ * eval (R15). Freeze the promoted corpus BEFORE authoring cases so the eval
+ * isn't a moving target (U6 execution note).
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
