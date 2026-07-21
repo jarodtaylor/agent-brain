@@ -231,4 +231,37 @@ describe("retrieve — committed gate (KTD2, R8, R9)", () => {
 
     expect(results).toEqual([]);
   });
+
+  test("fresh account: retrieve provisions the index when it is absent (KTD1 just-in-time create)", async () => {
+    const store = freshStore();
+    const fake = fakeIndex();
+    const node = promoteAndWrite(store);
+    commitAll(store.root, "promote north star");
+
+    // Index does not exist yet, and record the create call.
+    let created = "";
+    fake.client.listIndexes = async () => ({ indexes: [] });
+    fake.client.createIndexForModel = async (o: { name: string }) => {
+      created = o.name;
+    };
+
+    const results = await retrieve(store, "north star", { ...opts, client: fake.client });
+
+    expect(created).toBe("agent-brain-test");
+    expect(results.map((n) => n.slug)).toContain(node.slug);
+  });
+
+  test("nil store never provisions an index (no committed content, no Pinecone touch)", async () => {
+    const store = freshStore();
+    const fake = fakeIndex();
+    let createCalls = 0;
+    fake.client.listIndexes = async () => ({ indexes: [] });
+    fake.client.createIndexForModel = async () => {
+      createCalls++;
+    };
+
+    await retrieve(store, "north star", { ...opts, client: fake.client });
+
+    expect(createCalls).toBe(0);
+  });
 });

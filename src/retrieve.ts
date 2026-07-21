@@ -16,7 +16,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { DistilledNode, PineconeClient } from "./pinecone";
-import { buildRecord, fetchExistingIds, getClient, getIndexName, searchNodes, upsertNodes } from "./pinecone";
+import { buildRecord, ensureIndex, fetchExistingIds, getClient, getIndexName, searchNodes, upsertNodes } from "./pinecone";
 import type { BrainStore } from "./store";
 
 export interface RetrievedNode {
@@ -141,6 +141,11 @@ export async function retrieve(
 
   const committedSlugs = committedKnowledgeSlugs(store.root);
   if (committedSlugs.length === 0) return [];
+
+  // Only touch Pinecone once there's committed content to serve. Ensures the
+  // integrated-embedding index exists before any fetch/upsert/search — on a
+  // fresh account the index is created here just-in-time (KTD1), not assumed.
+  await ensureIndex(client, indexName);
 
   const nodesBySlug = new Map<string, DistilledNode>(
     committedSlugs.map((slug) => [slug, parseKnowledgeNode(join(store.knowledgeDir, `${slug}.md`), slug)]),
