@@ -1,20 +1,12 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { describe, expect, test } from "bun:test";
 import { captureEpisode } from "./capture";
-import type { DistilledNode, FlatRecord, PineconeClient } from "./pinecone";
-import { DEFAULT_NAMESPACE } from "./pinecone";
+import type { FlatRecord, PineconeClient } from "./pinecone";
 import { promoteEpisode } from "./promote";
 import { retrieve } from "./retrieve";
-import { resolveStore } from "./store";
+import type { BrainStore } from "./store";
+import { useTempStores } from "./test-support";
 
-function gitInit(dir: string): void {
-  const result = Bun.spawnSync(["git", "init", "-q", dir]);
-  if (result.exitCode !== 0) {
-    throw new Error(`git init failed for ${dir}: ${result.stderr.toString()}`);
-  }
-}
+const { freshStore } = useTempStores();
 
 function git(dir: string, ...args: string[]): void {
   const result = Bun.spawnSync(["git", "-C", dir, ...args]);
@@ -26,22 +18,6 @@ function git(dir: string, ...args: string[]): void {
 function commitAll(dir: string, message: string): void {
   git(dir, "add", "-A");
   git(dir, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-q", "-m", message);
-}
-
-const cleanupDirs: string[] = [];
-
-afterEach(() => {
-  while (cleanupDirs.length > 0) {
-    const dir = cleanupDirs.pop();
-    if (dir) rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-function freshStore() {
-  const dir = mkdtempSync(join(tmpdir(), "agent-brain-store-"));
-  cleanupDirs.push(dir);
-  gitInit(dir);
-  return resolveStore(dir);
 }
 
 /** In-memory fake Pinecone index — real git is used for the committed-gate; only Pinecone is faked. */
@@ -100,7 +76,7 @@ function fakeIndex() {
 }
 
 function promoteAndWrite(
-  store: ReturnType<typeof resolveStore>,
+  store: BrainStore,
   overrides: Partial<{ title: string; prose: string; description: string; tags: string[]; source: string }> = {},
 ) {
   const episode = captureEpisode(store, {

@@ -1,9 +1,14 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { describe, expect, test } from "bun:test";
+import { mkdirSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { assertOutsideBoundary, isPathInside, resolveStore } from "./store";
+import { gitInit, useTempStores } from "./test-support";
 
+const { trackDir, mktempStoreDir } = useTempStores();
+
+// The real public agent-brain repo root — used only to prove resolveStore refuses
+// a store nested inside it. Resolved via git, not process.cwd() (see U1 approach).
 function gitToplevel(dir: string): string {
   const result = Bun.spawnSync(["git", "-C", dir, "rev-parse", "--show-toplevel"]);
   if (result.exitCode !== 0) {
@@ -12,30 +17,11 @@ function gitToplevel(dir: string): string {
   return result.stdout.toString().trim();
 }
 
-function gitInit(dir: string): void {
-  const result = Bun.spawnSync(["git", "init", "-q", dir]);
-  if (result.exitCode !== 0) {
-    throw new Error(`git init failed for ${dir}: ${result.stderr.toString()}`);
-  }
-}
-
-// The real public agent-brain repo root — used only to prove resolveStore refuses
-// a store nested inside it. Resolved via git, not process.cwd() (see U1 approach).
 const PUBLIC_REPO_ROOT = gitToplevel(import.meta.dir);
-
-const cleanupDirs: string[] = [];
-
-afterEach(() => {
-  while (cleanupDirs.length > 0) {
-    const dir = cleanupDirs.pop();
-    if (dir) rmSync(dir, { recursive: true, force: true });
-  }
-});
 
 describe("resolveStore", () => {
   test("resolves a valid external git repo to store root + raw/knowledge handles", () => {
-    const dir = mkdtempSync(join(tmpdir(), "agent-brain-store-"));
-    cleanupDirs.push(dir);
+    const dir = mktempStoreDir();
     gitInit(dir);
 
     const store = resolveStore(dir);
@@ -46,8 +32,7 @@ describe("resolveStore", () => {
   });
 
   test("refuses a store path nested inside the public repo", () => {
-    const dir = join(PUBLIC_REPO_ROOT, ".tmp-boundary-test-inside");
-    cleanupDirs.push(dir);
+    const dir = trackDir(join(PUBLIC_REPO_ROOT, ".tmp-boundary-test-inside"));
     mkdirSync(dir, { recursive: true });
     gitInit(dir);
 
@@ -61,8 +46,7 @@ describe("resolveStore", () => {
   });
 
   test("refuses a path that exists but is not a git repo", () => {
-    const dir = mkdtempSync(join(tmpdir(), "agent-brain-store-plain-"));
-    cleanupDirs.push(dir);
+    const dir = mktempStoreDir();
 
     expect(() => resolveStore(dir)).toThrow(/not a git repository/i);
   });

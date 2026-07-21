@@ -1,17 +1,11 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { captureEpisode } from "./capture";
 import { promoteEpisode, slugify } from "./promote";
-import { resolveStore } from "./store";
+import { useTempStores } from "./test-support";
 
-function gitInit(dir: string): void {
-  const result = Bun.spawnSync(["git", "init", "-q", dir]);
-  if (result.exitCode !== 0) {
-    throw new Error(`git init failed for ${dir}: ${result.stderr.toString()}`);
-  }
-}
+const { freshStore } = useTempStores();
 
 function gitUntrackedFiles(dir: string): string {
   const result = Bun.spawnSync(["git", "-C", dir, "ls-files", "--others", "--exclude-standard"]);
@@ -21,27 +15,6 @@ function gitUntrackedFiles(dir: string): string {
 function gitLsFiles(dir: string): string {
   const result = Bun.spawnSync(["git", "-C", dir, "ls-files"]);
   return result.stdout.toString();
-}
-
-const cleanupDirs: string[] = [];
-
-afterEach(() => {
-  while (cleanupDirs.length > 0) {
-    const dir = cleanupDirs.pop();
-    if (dir) rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-function freshStore() {
-  const dir = mktempStoreDir();
-  gitInit(dir);
-  return resolveStore(dir);
-}
-
-function mktempStoreDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), "agent-brain-store-"));
-  cleanupDirs.push(dir);
-  return dir;
 }
 
 describe("promoteEpisode", () => {

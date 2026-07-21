@@ -1,37 +1,10 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { describe, expect, test } from "bun:test";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { captureEpisode } from "./capture";
-import { resolveStore } from "./store";
+import { useTempStores } from "./test-support";
 
-function gitInit(dir: string): void {
-  const result = Bun.spawnSync(["git", "init", "-q", dir]);
-  if (result.exitCode !== 0) {
-    throw new Error(`git init failed for ${dir}: ${result.stderr.toString()}`);
-  }
-}
-
-const cleanupDirs: string[] = [];
-
-afterEach(() => {
-  while (cleanupDirs.length > 0) {
-    const dir = cleanupDirs.pop();
-    if (dir) rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-function freshStore() {
-  const dir = mktempStoreDir();
-  gitInit(dir);
-  return resolveStore(dir);
-}
-
-function mktempStoreDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), "agent-brain-store-"));
-  cleanupDirs.push(dir);
-  return dir;
-}
+const { freshStore } = useTempStores();
 
 describe("captureEpisode", () => {
   test("writes an immutable raw episode dir with content + provenance", () => {
