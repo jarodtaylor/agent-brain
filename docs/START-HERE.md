@@ -40,7 +40,11 @@ the fast layer speeds up search, it never becomes the truth.*
   held-out node is in neither. So node *selection* was the real work — candidates in the held-out
   slice's neighborhood (agent observability, token/auth dashboards) were deliberately **not** promoted,
   and the reveal query was re-measured live: best competitor now **0.291** vs the held-out node's ~0.43
-  → margin *widened*. **Turnkey setup shipped:** `docs/CROSS-HARNESS-SETUP.md` (per-harness
+  → margin *widened*. **Honesty check:** exactly one new node asserts externally-checkable facts
+  (`graph-engine-options-after-the-kuzu-acquisition`, sourced from the doc Jarod flagged as
+  Gemini-written) — all of it verified against current sources: Apple/Kùzu closed Oct 2025 (repo
+  archived), SurrealDB BSL 1.1, Memgraph BSL 1.1, FalkorDB SSPLv1, ArcadeDB Apache 2.0. Every other
+  node describes Jarod's own reasoning. **Turnkey setup shipped:** `docs/CROSS-HARNESS-SETUP.md` (per-harness
   registration, the `.env`-not-shell rationale, troubleshooting), the launcher's stale pre-#22 comment
   fixed, and `.mcp.json` switched to the same launcher every other harness uses — verified under a
   harness-like stripped-env spawn (no inherited key, minimal PATH): 3 tools + a live `retrieve` with
