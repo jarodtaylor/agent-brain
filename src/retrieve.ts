@@ -15,7 +15,7 @@
  */
 import { parseNodeMarkdown } from "./frontmatter";
 import { runGit } from "./git";
-import type { DistilledNode, PineconeClient, SearchHit } from "./pinecone";
+import type { DistilledNode, FlatRecord, PineconeClient, SearchHit } from "./pinecone";
 import { buildRecord, ensureIndex, fetchExistingIds, getClient, getIndexName, searchNodes, upsertNodes } from "./pinecone";
 import type { BrainStore } from "./store";
 
@@ -152,33 +152,59 @@ export async function retrieve(
     .map((node) => buildRecord(node));
   if (missingRecords.length > 0) {
     await upsertNodes(client, indexName, missingRecords);
+    // Integrated-embedding SEARCH lags upsert on a fresh vector (proven live):
+    // a just-committed node is fetch-by-id-visible at once but takes seconds to
+    // enter the search index. Wait until each freshly-embedded node is actually
+    // SEARCHABLE before running the user's query — so a node is reliably returned
+    // on the very first retrieve after its commit (the cross-harness reveal).
+    await waitUntilSearchable(client, indexName, missingRecords, embedRetry);
   }
 
-  // Search, filtering hits to the committed set — defends R9/AE2 even if
-  // Pinecone still holds a reverted/stale node (see the "partial revert"
-  // test). When this call just embedded nodes, poll the SEARCH (not fetch)
-  // until a committed hit appears or the cap is hit (KTD1 freshness) — search
-  // lags fetch on a fresh index, so fetch-readiness would return too early.
-  const justEmbedded = missingRecords.length > 0;
-  let results: RetrievedNode[] = [];
-  for (let attempt = 0; attempt < embedRetry.attempts; attempt++) {
-    const hits = await searchNodes(client, indexName, query, topK);
-    results = hits
-      .filter((hit) => committedSet.has(hit.id))
-      .map((hit): { hit: SearchHit; node: DistilledNode | null } => ({ hit, node: nodeFor(hit.id) }))
-      .filter((pair): pair is { hit: SearchHit; node: DistilledNode } => pair.node !== null)
-      .map(({ hit, node }) => ({
-        slug: node.slug,
-        title: node.title,
-        prose: node.prose,
-        provenance: { source_episode: node.source_episode, source_path: node.source_path },
-        score: hit.score,
-      }));
-    // Stop as soon as we have a committed hit; also stop immediately when this
-    // call embedded nothing (an empty result is then genuinely empty, not lag).
-    if (results.length > 0 || !justEmbedded) break;
+  // One ranked search. The just-embedded nodes are now searchable and compete on
+  // merit. Filter hits to the committed set — defends R9/AE2 even if Pinecone
+  // still holds a reverted/stale node (see the "partial revert" test).
+  const hits = await searchNodes(client, indexName, query, topK);
+  return hits
+    .filter((hit) => committedSet.has(hit.id))
+    .map((hit): { hit: SearchHit; node: DistilledNode | null } => ({ hit, node: nodeFor(hit.id) }))
+    .filter((pair): pair is { hit: SearchHit; node: DistilledNode } => pair.node !== null)
+    .map(({ hit, node }) => ({
+      slug: node.slug,
+      title: node.title,
+      prose: node.prose,
+      provenance: { source_episode: node.source_episode, source_path: node.source_path },
+      score: hit.score,
+    }));
+}
+
+/**
+ * Blocks until every just-embedded record is searchable, or the retry budget is
+ * spent. Readiness is confirmed PER RECORD with a self-query on its own title (a
+ * guaranteed strong self-match), not by polling the user's query. Polling the
+ * user query is wrong twice over: it returns early the moment any OTHER already-
+ * searchable committed node hits — before the fresh node appears (the exact bug
+ * this fixes) — and it would burn the whole deadline on a query that legitimately
+ * doesn't rank the fresh node. A vector that answers its own title is in the
+ * search index, so it will also be considered for the real query, ranked on merit.
+ */
+async function waitUntilSearchable(
+  client: PineconeClient,
+  indexName: string,
+  records: FlatRecord[],
+  retry: { attempts: number; delayMs: number },
+): Promise<void> {
+  // Wide enough that a node's own title reliably ranks it within the window even
+  // in a large index (a title is maximally similar to its own node).
+  const SELF_QUERY_TOPK = 20;
+  let pending = records;
+  for (let attempt = 0; attempt < retry.attempts && pending.length > 0; attempt++) {
+    const stillPending: FlatRecord[] = [];
+    for (const rec of pending) {
+      const hits = await searchNodes(client, indexName, rec.title, SELF_QUERY_TOPK);
+      if (!hits.some((h) => h.id === rec.id)) stillPending.push(rec);
+    }
+    pending = stillPending;
     // Don't sleep after the final attempt — no further search will run.
-    if (attempt < embedRetry.attempts - 1) await Bun.sleep(embedRetry.delayMs);
+    if (pending.length > 0 && attempt < retry.attempts - 1) await Bun.sleep(retry.delayMs);
   }
-  return results;
 }
