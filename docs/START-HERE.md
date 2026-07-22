@@ -20,7 +20,7 @@ the fast layer speeds up search, it never becomes the truth.*
 - **Borrow** L1/L2/L4 patterns from the IBOS reference; **build** the new L3 retrieval adapter.
 - **Northstar intake backlog:** `docs/NORTHSTAR-SOURCES.local.md` (gitignored) — the raw material to dogfood.
 
-## Where we are RIGHT NOW  (2026-07-21)
+## Where we are RIGHT NOW  (2026-07-22)
 - ✅ Repo scaffolded; anti-drift docs + local `/handoff` skill + `CLAUDE.md` entry point in place.
 - ✅ Operating model aligned — **build from agent-brain**; Compound Engineering is the methodology;
   Sherpa = the cohort deliverable schedule (see DECISIONS #10–11).
@@ -32,7 +32,26 @@ the fast layer speeds up search, it never becomes the truth.*
 - ✅ **Demo vehicle wired + PROVEN.** `.mcp.json` exposes `capture/promote/retrieve` to Claude Code (`PINECONE_API_KEY` via `${}` passthrough, store via `.env`). The **full gate sequence was dry-run end-to-end through the live MCP protocol**: capture → retrieve (absent) → promote → retrieve (**still** absent, uncommitted) → commit → retrieve (returns @rank-1 w/ provenance). Held-out slice = the braindump's *in-browser agent terminal* idea (chosen for max mess→clean contrast). **Runbook (5 beats) lives in the private cockpit** (`docs/demos/sprint-1-demo-runbook.md`) — names private paths, never in this repo.
 - ✅ **CROSS-HARNESS PROVEN (Codex → same brain), live via Herdr.** Build-vs-use fork closed → BUILD (DECISION #21). Canonical `scripts/mcp-server.sh` launcher (PATH-robust; any harness points at it) registered with Codex (`codex mcp add agent-brain -- <abs>/scripts/mcp-server.sh`). In an **interactive** Codex (gpt-5.6-sol) session, `retrieve` returned the **same node, slug, and source-episode id** Claude Code returns (`multi-model-harness-orchestration-by-role`, provenance `…85a954`). Two harnesses, one committed brain, identical distilled truth + provenance. **Root cause found by dogfooding:** headless `codex exec` masked the real error as "user cancelled"; interactive Herdr surfaced it — non-Claude harnesses don't inherit the shell's `PINECONE_API_KEY`, so the server must be **self-contained** (reads its own `.env`, DECISION #22). **Never verify a harness via ephemeral `codex exec`/`claude -p` — those are fire-and-forget; feedback needs an interactive (Herdr) session.**
 - 🚀 **SPRINT-2 "WOW" PUSH — plan locked, Day 1 DONE.** Demo reframed (with Jarod, aggressive-mode): the Sunday demo is now **cross-harness continuity *through the commit gate*** — a fresh decision is invisible in Claude *and* cold Codex until a human commits, then both recall it with provenance (not mem0's shared-DB; the membrane is the star). Plan: `docs/plans/2026-07-22-001-cross-harness-wow-plan.md` (demo-first sequencing, cut-rule = nothing off-camera, two lanes solo/with-Jarod; DECISION #8 superseded). **Day 1 (Wed) done:** the full through-the-gate loop verified end-to-end live (Claude promotes → Codex absent → commit → Codex present @0.425); and the demo-critical **embed-lag reveal bug is FIXED + merged (PR #3)** — a just-committed node is now searchable on the *first* retrieve (~2s, verified live), reliable in every harness.
-- ⏳ **▶ NEXT (Thu):** make the brain feel real on camera — **grow the corpus** (more nodes from the same sources) + **expand the eval**, and write a **turnkey cross-harness setup doc** (one launcher, self-contained `.env`; how any harness connects). Then Fri: runbook v2 + README/packaging + **rehearsal #1 with Jarod**; Sat: rehearse + **record**. Cut rule: reconciliation/graph only if filmed. Interactive/cross-harness verification is a **with-Jarod, Herdr** lane — never ephemeral. Sunday demo itself: reset store to `dd707d6` + warm index (runbook pre-flight); redaction is fine (Jarod's own AgentOS thinking, vault-relative provenance).
+- ✅ **Day 2 (Thu) DONE — the brain feels real.** **Corpus grown 8 → 19 nodes** (11 more distilled from
+  the *same* 4 episodes — no new sources, so provenance stays honest; now ~5 nodes per episode).
+  **Eval expanded 8 → 19 cases, `19/19 @rank-1` on the first run** — every original case held rank-1
+  despite the corpus more than doubling. New freeze commit: store `7e648fd`.
+  **The check the eval can't do:** an eval can go green while the demo's reveal is dead, because the
+  held-out node is in neither. So node *selection* was the real work — candidates in the held-out
+  slice's neighborhood (agent observability, token/auth dashboards) were deliberately **not** promoted,
+  and the reveal query was re-measured live: best competitor now **0.291** vs the held-out node's ~0.43
+  → margin *widened*. **Turnkey setup shipped:** `docs/CROSS-HARNESS-SETUP.md` (per-harness
+  registration, the `.env`-not-shell rationale, troubleshooting), the launcher's stale pre-#22 comment
+  fixed, and `.mcp.json` switched to the same launcher every other harness uses — verified under a
+  harness-like stripped-env spawn (no inherited key, minimal PATH): 3 tools + a live `retrieve` with
+  provenance. Runbook pins updated in the cockpit (reset target `dd707d6` → `7e648fd`, 19/19).
+- ⏳ **▶ NEXT (Fri):** runbook v2 (rebuild around the cross-harness-through-the-gate spine) + packaging;
+  **rehearsal #1 with Jarod** — the one thing that needs him, block it before Sat. Sat: rehearse +
+  **record**. Cut rule: reconciliation/graph only if filmed. Interactive/cross-harness verification is a
+  **with-Jarod, Herdr** lane — never ephemeral. Sunday demo pre-flight: reset store to `7e648fd` + warm
+  index; redaction is fine (Jarod's own AgentOS thinking, vault-relative provenance).
+  **One open acceptance:** the `.mcp.json` launcher switch needs a Claude Code **session restart**
+  (`/mcp` → 3 tools + one `retrieve`) — if it fails, revert that one line, don't debug the vehicle.
 
 ## How we work
 - **Model routing:** Opus main loop / Sonnet coding subagents (Fable at architecture-lock gates).

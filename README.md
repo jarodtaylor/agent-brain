@@ -25,12 +25,24 @@ brain — even when it only plays a bit part in a larger fan-out.
 
 ```bash
 bun install
-cp .env.example .env   # then add your PINECONE_API_KEY
+cp .env.example .env   # then add your PINECONE_API_KEY + AGENT_BRAIN_STORE
 ```
+
+Then point any MCP-speaking harness at the one launcher, `scripts/mcp-server.sh`:
+
+```bash
+codex mcp add agent-brain -- /absolute/path/to/agent-brain/scripts/mcp-server.sh
+```
+
+Claude Code is pre-wired via `.mcp.json`. Full walkthrough, per-harness registration, and
+troubleshooting: **[docs/CROSS-HARNESS-SETUP.md](docs/CROSS-HARNESS-SETUP.md)**.
 
 ## Usage
 
-_Coming soon — the walking skeleton (capture → promote → retrieve) is in progress._
+Three tools: `capture` a raw episode, `promote` it into a distilled markdown node, `retrieve` it
+semantically with provenance. The catch that makes it different — **a promoted node isn't retrievable
+until you `git commit` it in your store.** Writing something down isn't the same as knowing it; the
+commit is the review gate, and it's the same gate in every harness.
 
 ## License
 

@@ -1,11 +1,7 @@
 {
   "mcpServers": {
     "agent-brain": {
-      "command": "bun",
-      "args": ["run", "src/index.ts"],
-      "env": {
-        "PINECONE_API_KEY": "${PINECONE_API_KEY}"
-      }
+      "command": "./scripts/mcp-server.sh"
     }
   }
 }

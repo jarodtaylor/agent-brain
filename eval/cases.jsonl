@@ -1,5 +1,5 @@
 // eval/cases.jsonl — one JSON object per line (lines starting with // are ignored).
-// Frozen against the committed U6 corpus (store commit dd707d6). Each query is the
+// Frozen against the committed corpus (store commit 7e648fd, 19 nodes). Each query is the
 // question ONLY its target node answers, phrased semantically (not lexically) to
 // exercise real retrieval, and pins the source episode so a wrong-provenance hit fails.
 // Schema: { "query": "...", "expect_slug": "...", "expect_source_episode": "..." }
@@ -11,3 +11,15 @@
 { "query": "How do I stop a freshly written note from being treated as settled truth right away — what review states should it move through first?", "expect_slug": "node-lifecycle-the-promotion-discipline-okf-lacks", "expect_source_episode": "2026-07-22T00-40-16-524Z-ca0f35" }
 { "query": "How should I split a coding project across Claude, Codex, and Cursor so each harness runs the part of the workflow it's best at?", "expect_slug": "multi-model-harness-orchestration-by-role", "expect_source_episode": "2026-07-22T00-40-16-524Z-85a954" }
 { "query": "I tend to give rushed, sloppy direction when several agents pile on at once — what did I want to build to catch bad calls before an agent runs with them?", "expect_slug": "advisor-council-a-decision-gate-for-rushed-calls", "expect_source_episode": "2026-07-22T00-40-16-524Z-85a954" }
+// --- added with the corpus growth to 19 nodes ---
+{ "query": "Before I build a graph over a repo, which directories should I deliberately leave out so the clustering doesn't get skewed by copies of the same content?", "expect_slug": "graph-the-canonical-tree-not-its-adapter-shims", "expect_source_episode": "2026-07-22T00-40-16-524Z-ca0f35" }
+{ "query": "Which of my knowledge-base health checks should be plain scripts, and which genuinely need a model to make a judgment call?", "expect_slug": "split-linting-deterministic-scripts-vs-a-fuzzy-curator-agent", "expect_source_episode": "2026-07-22T00-40-16-524Z-ca0f35" }
+{ "query": "What small artifact should load ahead of everything else, as a condensed stand-in for the full rulebook?", "expect_slug": "the-doctrine-card-a-compressed-load-first-projection", "expect_source_episode": "2026-07-22T00-40-16-524Z-ca0f35" }
+{ "query": "Give me the full named list of event types a write can be classified as — including the ones that explicitly do not count as promotions.", "expect_slug": "the-six-promotion-event-types", "expect_source_episode": "2026-07-22T00-40-16-524Z-cb1cd9" }
+{ "query": "Should I invest in storing more, or in fetching better? Why does a small precise fragment set beat dumping a lot of context?", "expect_slug": "memory-is-raw-material-retrieval-is-the-operating-layer", "expect_source_episode": "2026-07-22T00-40-16-524Z-cb1cd9" }
+{ "query": "How long should one knowledge file be, and what metadata does every file need so a different agent can still read it?", "expect_slug": "atomic-nodes-and-the-okf-frontmatter-contract", "expect_source_episode": "2026-07-22T00-40-16-525Z-665163" }
+{ "query": "The embedded graph database I was planning to use got bought by a big company — what are my replacement options and how do their licenses compare?", "expect_slug": "graph-engine-options-after-the-kuzu-acquisition", "expect_source_episode": "2026-07-22T00-40-16-525Z-665163" }
+{ "query": "How do I get keyword search and semantic similarity over my session history without standing up a database server?", "expect_slug": "sqlite-as-the-local-first-hybrid-episodic-store", "expect_source_episode": "2026-07-22T00-40-16-525Z-665163" }
+{ "query": "How does the system keep its own advice honest over time instead of just piling up confident guidance nobody ever grades?", "expect_slug": "wagers-record-predictions-then-grade-them-against-outcomes", "expect_source_episode": "2026-07-22T00-40-16-525Z-665163" }
+{ "query": "What do I need to bake into every project so visual quality gets enforced with the same rigor as code quality?", "expect_slug": "design-is-not-a-second-class-citizen", "expect_source_episode": "2026-07-22T00-40-16-524Z-85a954" }
+{ "query": "Why can't I just drop one copy of the same capability into every agent runtime — what has to change per runtime, and who should actually get it installed?", "expect_slug": "skills-are-not-one-size-fits-all-across-harnesses", "expect_source_episode": "2026-07-22T00-40-16-524Z-85a954" }

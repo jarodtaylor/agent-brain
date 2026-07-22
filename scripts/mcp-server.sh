@@ -3,9 +3,12 @@
 #
 # The cross-harness contract in one file: ANY MCP-speaking harness (Claude Code,
 # Codex, Cursor, …) points at THIS script and shares the same brain. It cd's to
-# the repo root so Bun auto-loads .env (AGENT_BRAIN_STORE); PINECONE_API_KEY is
-# inherited from the launching environment (kept in the shell / 1Password, never
-# duplicated into .env). No per-harness secret plumbing.
+# the repo root so Bun auto-loads .env, which supplies BOTH AGENT_BRAIN_STORE and
+# PINECONE_API_KEY — the server is self-contained and does NOT rely on the
+# launching harness's environment. That is deliberate: harnesses other than Claude
+# Code do not pass an exported PINECONE_API_KEY down to the MCP subprocess, so a
+# shell-inherited key silently works in one harness and breaks every other one.
+# .env is gitignored. No per-harness secret plumbing.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
