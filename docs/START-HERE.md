@@ -49,11 +49,21 @@ the fast layer speeds up search, it never becomes the truth.*
   fixed, and `.mcp.json` switched to the same launcher every other harness uses — verified under a
   harness-like stripped-env spawn (no inherited key, minimal PATH): 3 tools + a live `retrieve` with
   provenance. Runbook pins updated in the cockpit (reset target `dd707d6` → `7e648fd`, 19/19).
-- ⏳ **▶ NEXT (Fri):** runbook v2 (rebuild around the cross-harness-through-the-gate spine) + packaging;
-  **rehearsal #1 with Jarod** — the one thing that needs him, block it before Sat. Sat: rehearse +
-  **record**. Cut rule: reconciliation/graph only if filmed. Interactive/cross-harness verification is a
-  **with-Jarod, Herdr** lane — never ephemeral. Sunday demo pre-flight: reset store to `7e648fd` + warm
-  index; redaction is fine (Jarod's own AgentOS thinking, vault-relative provenance).
+- ✅ **Runbook v2 WRITTEN — demo build is content-complete.** Spine rebuilt around cross-harness through
+  the gate: 6 beats over 3 Herdr panes (Claude / cold Codex / a plain shell for the commit), with the
+  gate checked in **both** harnesses before *and* after the commit. **v1 kept as a tested fallback** —
+  if Codex misbehaves on camera, drop to single-harness and lose only the amplifier, not the point.
+  Added an on-camera failure-mode → recovery-line table and a timed rehearsal checklist. Both harnesses
+  re-verified as registered against the one launcher (`claude mcp list` + `codex mcp list`).
+  **Packaging CUT** (npx/install) — the cut rule is "nothing earns a slot unless it's on camera," and
+  packaging never appears in the demo. It's Sprint 2.
+- ⏳ **▶ NEXT — rehearsal #1, Fri 2026-07-24 (with Jarod, Herdr).** Sat = punch list + **record** (a day
+  of slack, deliberately). Two things only the rehearsal can retire: the held-out node's actual rank-1
+  score on the *19-node* corpus (was ~0.43 at 8), and whether Codex's first post-commit retrieve lands
+  on the **first** try (PR #3 fixed the embed lag — proven in Claude, unproven in Codex).
+  Cut rule: reconciliation/graph only if filmed. Cross-harness verification is **interactive, never
+  ephemeral**. Pre-flight: reset store to `7e648fd` + warm the index once (one warm-up covers both
+  harnesses — shared index).
   **Launcher switch ACCEPTED** — `claude mcp list` re-read the config, resolved the relative
   `./scripts/mcp-server.sh` from the repo root, spawned it and handshook (`✔ Connected`). Both halves
   now proven: Claude Code parses/spawns the relative command, and the launcher itself runs under a
