@@ -22,11 +22,13 @@ Every decision + why + what it serves (the north star). Newest at the bottom. Op
 | 16 | **Raw tier is immutable/append-only; L2 is curated *current* truth, not a timeline** (Karpathy/IBOS) | History lives in raw, meaning in L2 → unbreakable provenance + deterministic eval | The real model, not a compromise |
 | 17 | **Embed-on-commit = lazy-embed on retrieve** (retrieve returns only git-`HEAD`-committed nodes; advisor-gated) | Correctness lives in the committed-status gate (R8), so the trigger is reversible; lazy-embed uniquely gives *committed ⇒ retrievable, no manual step* | A robust on-camera demo |
 | 18 | **Brain store lives OUTSIDE the public repo; boundary enforced by path validation** (refuse to write inside the public tree) | Personal distilled notes can't land in the public product repo | The public/private boundary |
+| 19 | **The committed-gate governs CONTENT, not just identity** — `retrieve` reads each node's bytes from the git-HEAD blob (`git show HEAD:knowledge/<slug>.md`), never the working tree | Code review (4 reviewers, 2 model families) found retrieve gated the slug on HEAD but read content from the working tree — an uncommitted edit to a committed node leaked out *and* into Pinecone. Reading from HEAD makes gate + content one source of truth | Honest membrane — the differentiator's promise |
 
 ## Open forks (decide later)
 - **Build-vs-use** — is the membrane already provided by shipping tiered-memory tools (mem0, Letta/MemGPT, Zep)? Carried as an FYI from ce-doc-review → a quick `/ce-pov` before/around build.
 - **License** — TBD (public repo) → before wider sharing.
 - **STRATEGY.md** — formal north star via `ce-strategy` → when we want it canonical.
 - **Graph + SQLite layers** — post-MVI.
+- **Reconciliation hardening** (post-MVI, surfaced by the PR #1 review; all deferred with the reconciliation layer): a committed *edit* leaves a stale Pinecone vector (content is correct from HEAD, but the embedding isn't re-projected); revert/rm never purges Pinecone (retrieval filters it, but the vector lingers); >topK stale vectors could crowd out a committed node; concurrent first-retrieves could race `ensureIndex`; the store boundary is case-sensitive (a case-only path difference on APFS could evade the nesting check). None block Sprint 1.
 
-_Closed: **L2↔L3 cut + promotion taxonomy** — resolved this session (immutable raw, curated L2, git-commit gate, lazy-embed) and captured in the plan._
+_Closed: **L2↔L3 cut + promotion taxonomy** — resolved (immutable raw, curated L2, git-commit gate, lazy-embed), captured in the plan. **Skeleton U1–U5 built + reviewed** → PR #1; the committed-gate content-read hole is closed (#19)._

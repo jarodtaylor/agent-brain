@@ -1,18 +1,22 @@
 #!/usr/bin/env bun
 /**
- * agent-brain — MCP server (walking-skeleton stub)
+ * agent-brain — MCP server (walking skeleton)
  *
- * Exposes the three-step memory loop as MCP tools:
- *   capture  → record a raw episode into the runtime tier
- *   promote  → distill a raw episode into durable truth (git markdown + vector projection)
- *   retrieve → semantic recall of distilled truth, with provenance
+ * Exposes the three-step memory loop as MCP tools, wired to real storage:
+ *   capture  → append an immutable raw episode into the external brain store
+ *   promote  → scaffold an uncommitted distilled OKF node at a deterministic slug
+ *   retrieve → semantic recall of git-HEAD-committed nodes only, with provenance
  *
- * These are intentionally stubs. Sprint 1 wires them to real storage (markdown + Pinecone).
- * The architecture rule they enforce: nothing is "known" until it is promoted into durable truth.
+ * The architecture rule they enforce: nothing is "known" until it is promoted
+ * AND committed into durable truth (git HEAD of the brain store).
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { captureEpisode } from "./capture";
+import { promoteEpisode } from "./promote";
+import { retrieve } from "./retrieve";
+import { resolveStore } from "./store";
 
 const server = new McpServer({ name: "agent-brain", version: "0.0.1" });
 
@@ -27,14 +31,18 @@ server.registerTool(
       source: z.string().optional().describe("Where it came from — e.g. the harness or session id."),
     },
   },
-  async ({ text, source }) => ({
-    content: [
-      {
-        type: "text",
-        text: `[stub] captured ${text.length} chars${source ? ` from ${source}` : ""}. (persistence not wired yet)`,
-      },
-    ],
-  }),
+  async ({ text, source }) => {
+    const store = resolveStore();
+    const episode = captureEpisode(store, { text, source });
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Captured episode ${episode.id}${source ? ` from ${source}` : ""}. Not yet retrievable — promote it to make it durable truth.`,
+        },
+      ],
+    };
+  },
 );
 
 server.registerTool(
@@ -42,16 +50,27 @@ server.registerTool(
   {
     title: "Promote",
     description:
-      "Distill a captured raw episode into a durable, human-readable knowledge node (git markdown) and project it into the vector index. The only path into durable truth.",
+      "Distill a captured raw episode into a durable, human-readable knowledge node (git markdown), written uncommitted. The calling agent authors the distilled prose; the node becomes durable truth only once a human commits it.",
     inputSchema: {
       episodeId: z.string().describe("Id of the captured episode to promote."),
+      title: z.string().describe("Title of the knowledge node. Determines its slug/filename."),
+      prose: z.string().describe("The distilled prose, authored by the calling agent. Written verbatim as the node body."),
+      description: z.string().optional().describe("One-line description for the node's frontmatter."),
+      tags: z.array(z.string()).optional().describe("Tags for the node's frontmatter."),
     },
   },
-  async ({ episodeId }) => ({
-    content: [
-      { type: "text", text: `[stub] would promote episode ${episodeId} into durable truth. (not wired yet)` },
-    ],
-  }),
+  async ({ episodeId, title, prose, description, tags }) => {
+    const store = resolveStore();
+    const node = promoteEpisode(store, { episodeId, title, prose, description, tags });
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Promoted episode ${episodeId} to ${node.path} (uncommitted). Review the diff and commit to make it durable truth.`,
+        },
+      ],
+    };
+  },
 );
 
 server.registerTool(
@@ -65,14 +84,32 @@ server.registerTool(
       topK: z.number().int().positive().optional().describe("How many results (default 5)."),
     },
   },
-  async ({ query, topK }) => ({
-    content: [
-      {
-        type: "text",
-        text: `[stub] would retrieve top ${topK ?? 5} distilled notes for: "${query}". (not wired yet)`,
-      },
-    ],
-  }),
+  async ({ query, topK }) => {
+    const store = resolveStore();
+    const results = await retrieve(store, query, { topK });
+
+    if (results.length === 0) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `No committed knowledge nodes matched "${query}". Nothing is retrievable until it's promoted and committed.`,
+          },
+        ],
+      };
+    }
+
+    const text = results
+      .map((node, i) => {
+        const provenance = node.provenance.source_path
+          ? `${node.provenance.source_episode} (${node.provenance.source_path})`
+          : node.provenance.source_episode;
+        return `${i + 1}. ${node.title} [${node.slug}] — score ${node.score.toFixed(3)}\n   source: ${provenance}\n\n${node.prose}`;
+      })
+      .join("\n\n");
+
+    return { content: [{ type: "text", text }] };
+  },
 );
 
 async function main(): Promise<void> {

@@ -18,14 +18,17 @@ it semantically, with provenance. The rule: *nothing is "known" until it's promo
 the fast layer speeds up search, it never becomes the truth.*
 - **Platform:** TypeScript / Bun — MCP server (+ thin CLI) + Pinecone (integrated embedding).
 - **Borrow** L1/L2/L4 patterns from the IBOS reference; **build** the new L3 retrieval adapter.
+- **Northstar intake backlog:** `docs/NORTHSTAR-SOURCES.local.md` (gitignored) — the raw material to dogfood.
 
 ## Where we are RIGHT NOW  (2026-07-21)
-- ✅ Repo scaffolded — MCP server stub (`capture` / `promote` / `retrieve`), typechecks clean, deps in.
-- ✅ Anti-drift docs + local `/handoff` skill + `CLAUDE.md` entry point in place.
+- ✅ Repo scaffolded; anti-drift docs + local `/handoff` skill + `CLAUDE.md` entry point in place.
 - ✅ Operating model aligned — **build from agent-brain**; Compound Engineering is the methodology;
   Sherpa = the cohort deliverable schedule (see DECISIONS #10–11).
-- ✅ **Plan cycle complete** (2026-07-21) — ce-brainstorm → requirements → 6-persona ce-doc-review (10 findings resolved) → advisor-gated architecture → ce-plan. **Implementation-ready** plan at `docs/plans/2026-07-21-001-feat-memory-walking-skeleton-plan.md`: 6 units (U1→U6), per-unit test scenarios, Verification Contract, DoD. Key refinements locked in DECISIONS #12–18.
-- ⏳ **▶ NEXT:** build the skeleton — `ce-work` (or `/goal`) on the plan, **U1 → U6 in dependency order** (start U1: brain-store resolution + boundary enforcement; Sonnet coding subagents). Target: **Sprint 1 demo, Sun Jul 26.**
+- ✅ **Plan cycle complete** — implementation-ready plan at `docs/plans/2026-07-21-001-feat-memory-walking-skeleton-plan.md` (6 units, Verification Contract, DoD). Refinements in DECISIONS #12–18.
+- ✅ **Skeleton BUILT (U1–U5) on branch `feat/memory-walking-skeleton`** — `capture → promote → git commit → retrieve` runs end-to-end; the git-HEAD committed-gate holds (verified by a live Pinecone smoke). 46 tests + clean typecheck. Real brain store lives at `~/agent-brain-store` (external, git-backed).
+- ✅ **Reviewed + shipped to PR #1** — ce-simplify (2 passes) + ce-code-review (7 reviewers + Codex cross-model). Found + fixed one **P0 in the differentiator** (a committed-gate content leak — retrieve read content from the working tree; now reads the HEAD blob, DECISIONS #19), plus hardening. Copilot + CodeRabbit PR reviews triaged, fixed, and replied (`c07eb2e`).
+- ✅ **`PINECONE_API_KEY` rotated** — old key (leaked into a subagent transcript) revoked; new key in 1Password (`op://Deftloom/pinecone-agent-brain-key`) via chezmoi. **Restart the session to pick up the new env.**
+- ⏳ **▶ NEXT:** **U6 — real demo corpus + eval.** Needs Jarod's AMS research + at least one messy source. Steps: run the real `capture→promote→commit→retrieve` loop on that material into `~/agent-brain-store`; freeze the promoted corpus; author 5–10 cases in `eval/cases.jsonl` (each needs `query` + `expect_slug` + `expect_source_episode`); `bun run eval/run.ts` must pass. Then the **Sprint 1 demo, Sun Jul 26.** (Also: merge PR #1.)
 
 ## How we work
 - **Model routing:** Opus main loop / Sonnet coding subagents (Fable at architecture-lock gates).
