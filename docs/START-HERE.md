@@ -57,13 +57,24 @@ the fast layer speeds up search, it never becomes the truth.*
   re-verified as registered against the one launcher (`claude mcp list` + `codex mcp list`).
   **Packaging CUT** (npx/install) — the cut rule is "nothing earns a slot unless it's on camera," and
   packaging never appears in the demo. It's Sprint 2.
-- ⏳ **▶ NEXT — rehearsal #1, Fri 2026-07-24 (with Jarod, Herdr).** Sat = punch list + **record** (a day
-  of slack, deliberately). Two things only the rehearsal can retire: the held-out node's actual rank-1
-  score on the *19-node* corpus (was ~0.43 at 8), and whether Codex's first post-commit retrieve lands
-  on the **first** try (PR #3 fixed the embed lag — proven in Claude, unproven in Codex).
-  Cut rule: reconciliation/graph only if filmed. Cross-harness verification is **interactive, never
-  ephemeral**. Pre-flight: reset store to `7e648fd` + warm the index once (one warm-up covers both
-  harnesses — shared index).
+- ✅ **REHEARSAL DONE (2026-07-22, live in Herdr) — all 6 beats passed, both harnesses.** Ran the full
+  cross-harness-through-the-gate sequence end to end: capture → absent in Claude *and* cold Codex →
+  promote → **still** absent in both → human commit → **both return the node at rank #1 with identical
+  provenance** (Claude **0.440**, Codex **0.432**, best competitor **0.291** — a wider margin than at 8
+  nodes). Both rehearsal unknowns retired, including the one that needed a purpose-built probe: a
+  distinct-slug node proved **cold-embed works through Codex first-try (0.601, no Claude warm-up)**, so
+  retrieve order doesn't matter. Store reset to `7e648fd` and verified (19 nodes, held-out slice absent).
+- 🔑 **Demo decision from the rehearsal: the cold Codex pane launches in a NEUTRAL EMPTY DIRECTORY.**
+  It kills the "it just read your files" objection — Codex has no repo to read, so the brain is the only
+  channel — and it stops an eager auto-approving Codex from touching the store. Also learned live:
+  Herdr reports `idle` while Codex is actually sitting on a directory-trust dialog (**`idle` ≠ ready** —
+  read the pane, clear the dialog), completion reads `done` (not `idle`) in a backgrounded pane, and
+  Codex **auto-approves** the MCP call so no keystroke is needed on camera. Runbook now carries the
+  measured numbers, the verified Herdr primitives, and Codex's own best lines.
+- ⏳ **▶ NEXT — Sat: record.** Fri is now slack, not a dependency. Pre-flight: reset store to `7e648fd`,
+  warm the index once (shared across harnesses), and launch the Codex pane **off-camera** so its
+  trust dialog + a cosmetic stale-MCP warning don't land in the take. Cut rule still holds:
+  reconciliation/graph only if filmed.
   **Launcher switch ACCEPTED** — `claude mcp list` re-read the config, resolved the relative
   `./scripts/mcp-server.sh` from the repo root, spawned it and handshook (`✔ Connected`). Both halves
   now proven: Claude Code parses/spawns the relative command, and the launcher itself runs under a
