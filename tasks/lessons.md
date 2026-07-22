@@ -14,3 +14,18 @@ is ever "needed," that's the signal you tested against the wrong target.
 
 **Why it matters:** the frozen corpus + its commit hash are load-bearing (eval provenance pins to it,
 the runbook resets to it). Mutating it silently drifts the baseline the whole demo + eval depend on.
+
+## Lead with the answer in ONE glance — Jarod has ADHD, walls of text fail
+**2026-07-22.** Delivered a full ce-pov verdict as a dense multi-section block (grade, incumbent,
+verified facts split project/external, conditions, reversal trigger). Jarod screenshotted it: "This is
+what my ADHD brain sees." Correct — it was a wall. Even the follow-up `AskUserQuestion` menu was too
+much and got rejected.
+
+**Rule:** answer first, in 1-3 short lines, bolded bottom line. THEN stop and let him engage — detail
+only on request. This is in CLAUDE.md ("one decision at a time, no walls of text") and the global
+profile; I violated it anyway when I had a rich result and wanted to show the work. The richness of
+what I found is never a license to dump it. A 6-section verdict block reads as noise, not rigor.
+
+**How to apply:** for any verdict/analysis/status — first line is the decision or answer. Supporting
+evidence is opt-in ("want the why?"), never front-loaded. Prefer a plain one-line next question over a
+multi-option menu unless the options genuinely need comparing.
