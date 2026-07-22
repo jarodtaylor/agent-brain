@@ -1,3 +1,13 @@
 // eval/cases.jsonl — one JSON object per line (lines starting with // are ignored).
-// Author 5–10 cases AFTER freezing the promoted corpus (U6 execution note).
+// Frozen against the committed U6 corpus (store commit dd707d6). Each query is the
+// question ONLY its target node answers, phrased semantically (not lexically) to
+// exercise real retrieval, and pins the source episode so a wrong-provenance hit fails.
 // Schema: { "query": "...", "expect_slug": "...", "expect_source_episode": "..." }
+{ "query": "Where should the line sit between the durable source of truth and the fast store I'm allowed to mutate freely, and what rule governs writes crossing it?", "expect_slug": "surface-boundary-truth-plane-vs-runtime-plane", "expect_source_episode": "2026-07-22T00-40-16-524Z-cb1cd9" }
+{ "query": "What content actually belongs in the vector database versus staying in the markdown wiki, so the vector store doesn't become a dumping ground?", "expect_slug": "l3-scope-only-raw-that-wont-compress-into-l2", "expect_source_episode": "2026-07-22T00-40-16-524Z-cb1cd9" }
+{ "query": "When an agent infers a relationship between two notes with some confidence score, how does that inferred link become a canonical one?", "expect_slug": "discovered-edges-promote-by-confidence-threshold", "expect_source_episode": "2026-07-22T00-40-16-524Z-cb1cd9" }
+{ "query": "Do I actually need a vector database to run an agent's memory, or is there proof it can work on plain files and git alone?", "expect_slug": "ibos-proves-an-agent-brain-runs-on-markdown-alone", "expect_source_episode": "2026-07-22T00-40-16-524Z-ca0f35" }
+{ "query": "Walk me through the layers of the brain architecture and what kind of memory each layer is responsible for.", "expect_slug": "agent-brain-the-six-component-layer-hierarchy", "expect_source_episode": "2026-07-22T00-40-16-525Z-665163" }
+{ "query": "How do I stop a freshly written note from being treated as settled truth right away — what review states should it move through first?", "expect_slug": "node-lifecycle-the-promotion-discipline-okf-lacks", "expect_source_episode": "2026-07-22T00-40-16-524Z-ca0f35" }
+{ "query": "How should I split a coding project across Claude, Codex, and Cursor so each harness runs the part of the workflow it's best at?", "expect_slug": "multi-model-harness-orchestration-by-role", "expect_source_episode": "2026-07-22T00-40-16-524Z-85a954" }
+{ "query": "I tend to give rushed, sloppy direction when several agents pile on at once — what did I want to build to catch bad calls before an agent runs with them?", "expect_slug": "advisor-council-a-decision-gate-for-rushed-calls", "expect_source_episode": "2026-07-22T00-40-16-524Z-85a954" }
