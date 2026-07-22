@@ -222,6 +222,31 @@ describe("retrieve — committed gate (KTD2, R8, R9)", () => {
     expect(results.map((n) => n.slug)).toContain(node.slug);
   });
 
+  test("reveal: a freshly committed node that lags in search still appears on the first retrieve, even when OTHER committed nodes are already searchable", async () => {
+    // Regression for the on-camera cross-harness reveal: the old poll broke on
+    // the FIRST committed hit, so an already-searchable node would return early
+    // and the just-committed (still-indexing) node was silently missed until a
+    // second retrieve. Now readiness is per fresh node, so the reveal is reliable.
+    const store = freshStore();
+    const fake = fakeIndex();
+    const first = promoteAndWrite(store, { title: "First Node", prose: "first prose" });
+    commitAll(store.root, "promote first");
+    await retrieve(store, "first", { ...opts, client: fake.client }); // embed + make searchable
+
+    const second = promoteAndWrite(store, { title: "Second Node", prose: "second prose" });
+    commitAll(store.root, "promote second");
+    // The fresh node lags in SEARCH while `first` is already searchable.
+    fake.delaySearchability(second.slug, 2);
+
+    const results = await retrieve(store, "second", {
+      ...opts,
+      client: fake.client,
+      embedRetry: { attempts: 5, delayMs: 1 },
+    });
+
+    expect(results.map((n) => n.slug)).toContain(second.slug);
+  });
+
   test("nil: a brain-store repo with zero commits returns an empty set, not an error", async () => {
     const store = freshStore();
     const fake = fakeIndex();
