@@ -41,3 +41,19 @@ Ephemeral `codex exec` / `claude -p` are only for delegating a task where the ar
 back. The approval wall that blocked me exists only in `exec` mode; interactively the human clicks
 Allow and the loop closes. General principle captured in memory:
 [[interactive-not-ephemeral-for-harness-feedback]].
+
+## Technical decisions are mine — reporting is not asking
+**2026-07-22.** Ended a turn with "Want me to start runbook v2 now, or leave Friday's lane clean?"
+and buried two side findings under a status dump. Jarod: *"My ADHD brain will not read that entire
+message. What do you need from me?"* — then set the roles explicitly: he's Product Manager, I'm
+Architect/CTO. "Own your expertise. Don't default to hand-holding. I'm here for the outcome, not the
+implementation details."
+
+**Rule:** the dividing line is **technical vs product**, not reversible vs irreversible. Sequencing,
+architecture, tooling, verification strategy, what to build next → decide and do, then report the
+call + why in one line. Only **product** judgment (scope, priorities, what the demo claims) goes to
+him. A reversible technical question is still hand-holding.
+
+**How to apply:** end turns with what I'm doing next, never a menu. Side findings (a leaked key, a
+broken MCP server) get their own one-liner or get handled — they never ride along in a status wall.
+If the reply needs scrolling, it already failed regardless of content quality.
