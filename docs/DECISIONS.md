@@ -28,6 +28,15 @@ Every decision + why + what it serves (the north star). Newest at the bottom. Op
 | 22 | **The MCP server is self-contained — it reads its own `.env` (store path + Pinecone key), not the launching harness's env** (one `scripts/mcp-server.sh` launcher, any harness points at it) | Proven by dogfooding cross-harness in an interactive Herdr session: Codex does NOT pass the shell-exported `PINECONE_API_KEY` to the MCP subprocess, so a shell-inherited key works for Claude Code but silently breaks every other harness. Per-harness env plumbing doesn't scale; a self-contained server does. Key lives in gitignored `.env` (local, never committed — not a sovereignty change; vendor-held data was the line, not a local file) | The cross-harness contract: any MCP harness shares one brain with zero per-harness secret setup |
 
 ## Open forks (decide later)
+- **Retrievable ≠ present: does the brain ever push, or only answer when asked?** Surfaced 2026-07-22 by
+  a real miss — Herdr operating knowledge existed, written down, in a project's `FRICTION.md`, and Jarod
+  still had to hand-route agents to it **twice**. The durable fix that day was a *skill*, because skills
+  auto-load into context on situational triggers while `retrieve` only fires when an agent thinks to ask.
+  That's the gap: agent-brain today makes knowledge **available**, not **present**. Options if we ever
+  close it: a session-start context projection (L1-style, the "doctrine card" pattern already in the
+  corpus), situational auto-retrieve hooks, or accept pull-only and treat skills as the push layer.
+  Post-MVI — but it's the difference between a brain you query and a brain that remembers *for* you,
+  which is the north-star Hermes behavior.
 - **License** — TBD (public repo) → before wider sharing.
 - **STRATEGY.md** — formal north star via `ce-strategy` → when we want it canonical.
 - **Graph + SQLite layers** — post-MVI.
