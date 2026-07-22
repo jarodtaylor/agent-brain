@@ -54,8 +54,10 @@ the fast layer speeds up search, it never becomes the truth.*
   **record**. Cut rule: reconciliation/graph only if filmed. Interactive/cross-harness verification is a
   **with-Jarod, Herdr** lane — never ephemeral. Sunday demo pre-flight: reset store to `7e648fd` + warm
   index; redaction is fine (Jarod's own AgentOS thinking, vault-relative provenance).
-  **One open acceptance:** the `.mcp.json` launcher switch needs a Claude Code **session restart**
-  (`/mcp` → 3 tools + one `retrieve`) — if it fails, revert that one line, don't debug the vehicle.
+  **Launcher switch ACCEPTED** — `claude mcp list` re-read the config, resolved the relative
+  `./scripts/mcp-server.sh` from the repo root, spawned it and handshook (`✔ Connected`). Both halves
+  now proven: Claude Code parses/spawns the relative command, and the launcher itself runs under a
+  stripped harness-like env (no inherited key, `bun` off PATH). Every harness is on one entrypoint.
 
 ## How we work
 - **Model routing:** Opus main loop / Sonnet coding subagents (Fable at architecture-lock gates).
