@@ -36,6 +36,13 @@ interface CaseResult {
 
 const CASES_PATH = join(import.meta.dir, "cases.jsonl");
 const TOP_K = 5;
+// Cold-index tolerance. On a fresh Pinecone index, semantic SEARCH lags
+// embed-by-id (see retrieve.ts): the first retrieve embeds every committed node
+// but only polls until ITS query has a hit, so a later case can transiently
+// miss its node while that node's vector is still indexing. This is search lag,
+// NOT a corpus/query defect — so a "not in top K" miss is retried up to this
+// deadline. A provenance mismatch is deterministic and never retried.
+const READY_RETRY = { attempts: 20, delayMs: 1000 };
 
 function loadCases(): EvalCase[] {
   if (!existsSync(CASES_PATH)) return [];
@@ -63,8 +70,7 @@ function loadCases(): EvalCase[] {
   return cases;
 }
 
-async function runCase(store: ReturnType<typeof resolveStore>, c: EvalCase): Promise<CaseResult> {
-  const results = await retrieve(store, c.query, { topK: TOP_K });
+function evaluate(results: Awaited<ReturnType<typeof retrieve>>, c: EvalCase): CaseResult {
   const rank = results.findIndex((r) => r.slug === c.expect_slug);
   const base = { query: c.query, expect_slug: c.expect_slug };
 
@@ -83,6 +89,18 @@ async function runCase(store: ReturnType<typeof resolveStore>, c: EvalCase): Pro
   return { ...base, passed: true, rank: rank + 1, reason: "ok" };
 }
 
+async function runCase(store: ReturnType<typeof resolveStore>, c: EvalCase): Promise<CaseResult> {
+  // Retry ONLY the "not in top K" miss, and only up to the readiness deadline —
+  // that's the shape a still-indexing vector takes. A pass or a provenance
+  // mismatch is returned immediately (both are stable, not lag-sensitive).
+  let result = evaluate(await retrieve(store, c.query, { topK: TOP_K }), c);
+  for (let attempt = 1; attempt < READY_RETRY.attempts && result.rank === null; attempt++) {
+    await Bun.sleep(READY_RETRY.delayMs);
+    result = evaluate(await retrieve(store, c.query, { topK: TOP_K }), c);
+  }
+  return result;
+}
+
 async function main(): Promise<void> {
   const cases = loadCases();
   if (cases.length === 0) {
@@ -96,6 +114,13 @@ async function main(): Promise<void> {
   }
 
   const store = resolveStore();
+
+  // Warm the index once before scoring: a single retrieve lazy-embeds EVERY
+  // committed node not yet in Pinecone (retrieve embeds the whole missing set,
+  // not just this query's hit). Running it up front means the per-case readiness
+  // retries only ever wait on search lag, never on a cold, unembedded corpus.
+  await retrieve(store, cases[0]!.query, { topK: TOP_K });
+
   const results: CaseResult[] = [];
   for (const c of cases) {
     results.push(await runCase(store, c));
