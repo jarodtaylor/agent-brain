@@ -13,6 +13,9 @@ build/
 *.local.md
 *.local.*
 
+# local workflow tooling (skills, session config) — kept local, per the agent-os convention
+.claude/
+
 # os / editor
 .DS_Store
 *.log
