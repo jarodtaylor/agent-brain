@@ -57,3 +57,27 @@ him. A reversible technical question is still hand-holding.
 **How to apply:** end turns with what I'm doing next, never a menu. Side findings (a leaked key, a
 broken MCP server) get their own one-liner or get handled — they never ride along in a status wall.
 If the reply needs scrolling, it already failed regardless of content quality.
+
+## Driving a second harness through Herdr — read the pane, never trust status
+**2026-07-22.** Drove a cold Codex pane through the full demo sequence from Claude. Jarod's
+agent-cost-tracker `FRICTION.md` saved two real detours, both reproduced here on a different repo
+and date — so treat them as stable Herdr behavior, not one-off flakes:
+
+- **`idle` ≠ ready.** Herdr reported `agent_status: idle` while Codex was actually sitting on the
+  "Do you trust the contents of this directory?" dialog. Sending the task then types into the dialog.
+  Always `pane read --source visible` after launch; clear with `pane run <pid> "1"`.
+- **`--source recent` is empty for an agent TUI** (alternate buffer). Use `recent-unwrapped` for
+  transcripts, `visible` for the current screen.
+- **`pane run` = text + Enter** (submits). `agent send` / `send-text` omit Enter — the task silently
+  never runs.
+- **Completion is focus-dependent:** a backgrounded pane reports `done`, not `idle`, so
+  `wait agent-status --status idle` rides out its full timeout. Poll for `idle` OR `done`.
+- **Codex auto-approves MCP tool calls** (`✔ Request approved for MCP retrieve`) — no keystroke.
+
+**New mitigation (ours):** launch the second harness in a **neutral empty directory**, never the repo.
+Jarod's log caught Codex running `git switch -c` unprompted from repo context; an empty cwd removes
+the repo it would act on. For a *verification* harness it's also the stronger proof — with no files to
+read, the MCP brain is the only channel it could have learned from.
+
+**Why it matters:** a second harness used as a witness is only evidence if it's provably isolated.
+Isolation is a demo design decision, not a safety afterthought.
