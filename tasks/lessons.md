@@ -29,3 +29,15 @@ what I found is never a license to dump it. A 6-section verdict block reads as n
 **How to apply:** for any verdict/analysis/status — first line is the decision or answer. Supporting
 evidence is opt-in ("want the why?"), never front-loaded. Prefer a plain one-line next question over a
 multi-option menu unless the options genuinely need comparing.
+
+## Cross-harness = interactive (Herdr), never `codex exec` / `claude -p`
+**2026-07-22.** To verify Codex retrieves from the same brain, I ran headless `codex exec` and burned
+many cycles fighting its non-interactive tool-approval + Claude Code's classifier. Jarod: wrong tool
+entirely — ephemeral invocations are fire-and-forget *delivery*, not a feedback loop.
+
+**Rule:** the agent-brain cross-harness proof — and ANY "does harness X work with our MCP server"
+check — runs in an **interactive, human-in-the-loop session, driven through Herdr**, never headless.
+Ephemeral `codex exec` / `claude -p` are only for delegating a task where the artifact is all you want
+back. The approval wall that blocked me exists only in `exec` mode; interactively the human clicks
+Allow and the loop closes. General principle captured in memory:
+[[interactive-not-ephemeral-for-harness-feedback]].
